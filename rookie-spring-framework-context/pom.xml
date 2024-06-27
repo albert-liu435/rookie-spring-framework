@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.rookie.bigdata</groupId>
+        <artifactId>rookie-spring-framework</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>rookie-spring-framework-context</artifactId>
+    <name>rookie-spring-framework-context</name>
+    <description>rookie-spring-framework-context</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+
+    </properties>
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <!--            <version>5.10.2</version>-->
+            <scope>test</scope>
+        </dependency>
+
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.slf4j</groupId>-->
+        <!--            <artifactId>slf4j-api</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>commons-codec</groupId>-->
+        <!--            <artifactId>commons-codec</artifactId>-->
+        <!--        </dependency>-->
+        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <groupId>com.github.binarywang</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <artifactId>qrcode-utils</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <groupId>org.jodd</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <artifactId>jodd-http</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <scope>provided</scope>&ndash;&gt;-->
+        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <groupId>org.jodd</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <artifactId>jodd-util</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <version>6.1.0</version>&ndash;&gt;-->
+        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.commons</groupId>-->
+        <!--            <artifactId>commons-lang3</artifactId>-->
+        <!--        </dependency>-->
+
+        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <groupId>org.bouncycastle</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <artifactId>bcpkix-jdk18on</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>ch.qos.logback</groupId>-->
+        <!--            <artifactId>logback-classic</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.testng</groupId>-->
+        <!--            <artifactId>testng</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.assertj</groupId>-->
+        <!--            <artifactId>assertj-guava</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.google.inject</groupId>-->
+        <!--            <artifactId>guice</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.projectlombok</groupId>-->
+        <!--            <artifactId>lombok</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.google.code.gson</groupId>-->
+        <!--            <artifactId>gson</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>javax.servlet</groupId>-->
+        <!--            <artifactId>javax.servlet-api</artifactId>-->
+        <!--            <version>4.0.1</version>-->
+        <!--            <optional>true</optional>-->
+        <!--            <scope>provided</scope>-->
+        <!--        </dependency>-->
+    </dependencies>
+
+
+    <profiles>
+        <profile>
+            <id>native-image</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <!--     <version>3.5.1</version>-->
+                        <version>3.12.1</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
