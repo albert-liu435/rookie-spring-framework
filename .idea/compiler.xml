@@ -10,6 +10,7 @@
         <module name="rookie-spring-framework-context" />
         <module name="rookie-spring-framework-core" />
         <module name="rookie-spring-framework-aop" />
+        <module name="rookie-spring-framework-beans" />
       </profile>
     </annotationProcessing>
   </component>
