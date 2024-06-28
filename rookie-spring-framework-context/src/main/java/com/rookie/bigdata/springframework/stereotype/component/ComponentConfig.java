@@ -1,4 +1,4 @@
-package com.rookie.bigdata.stereotype;
+package com.rookie.bigdata.springframework.stereotype.component;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
