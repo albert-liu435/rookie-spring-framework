@@ -1,0 +1,105 @@
+1、 AbstractApplicationContext
+refresh()方法的主线逻辑如下所示可被分为12个步骤，AbstractApplicationContext进行了相当程度的实现，子类也可基于此进行扩展：
+
+public void refresh() throws BeansException, IllegalStateException {
+	synchronized (this.startupShutdownMonitor) {
+		// ⚠️1.Prepare this context for refreshing.
+		prepareRefresh();
+
+		//  ⚠️2.Tell the subclass to refresh the internal bean factory.
+		ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+
+		// 3.Prepare the bean factory for use in this context.
+		prepareBeanFactory(beanFactory);
+
+		try {
+			//  ⚠️4.Allows post-processing of the bean factory in context subclasses.
+			postProcessBeanFactory(beanFactory);
+
+			//  ⚠️5.Invoke factory processors registered as beans in the context.
+			invokeBeanFactoryPostProcessors(beanFactory);
+
+			//  ⚠️6.Register bean processors that intercept bean creation.
+			registerBeanPostProcessors(beanFactory);
+
+			//  ⚠️7.Initialize message source for this context.
+			initMessageSource();
+
+			//  ⚠️8.Initialize event multicaster for this context.
+			initApplicationEventMulticaster();
+
+			//  ⚠️9.Initialize other special beans in specific context subclasses.
+			onRefresh();
+
+			//  ⚠️10.Check for listener beans and register them.
+			registerListeners();
+
+			//  ⚠️11.Instantiate all remaining (non-lazy-init) singletons.
+			finishBeanFactoryInitialization(beanFactory);
+
+			//  ⚠️12.Last step: publish corresponding event.
+			finishRefresh();
+		} catch (BeansException ex) {
+			//...
+		} finally {
+			//...
+		}
+	}
+}
+
+1.1 容器刷新前的准备
+进行了容器刷新前的准备工作，如记录开始时间(用于计算启动时长)、容器启动状态的设置、属性的初始化操作。其中，子类可扩展initPropertySources()方法，Spring web框架对该方法进行了扩展，
+实现从环境变量中获取属性值填充占位符。getEnvironment().validateRequiredProperties()可用于进行容器启动前的环境变量校验，要求指定的变量必须被赋值。this.earlyApplicationEvents
+属性用于收集事件广播器被初始化前的事件，在广播器创建后再触发这些事件，因此需要提前被初始化；当容器启动完成后，该属性需要被再次设置为null。
+
+1.2 获取beanFactory
+refreshBeanFactory()在子类中有不同的实现，而getBeanFactory()返回的都是new出来的DefaultListableBeanFactory类型的对象。对于AbstractRefreshableApplicationContext类型的
+Spring容器，refreshBeanFactory()进行了以下扩展：
+createBeanFactory()方法通过直接new方式创建DefaultListableBeanFactory类型的IOC容器；通过调用容器的setSerializationId方法设置serializationId属性。重点在于customizeBeanFactory(beanFactory);
+和loadBeanDefinitions(beanFactory);方法；customizeBeanFactory方法允许对容器进行一些设置，如同名Bean是否覆盖问题、是否支持循环依赖等，如下所示：
+loadBeanDefinitions(beanFactory)方法的功能是向IOC容器中注册BeanDefinition信息，这些BeanDefinition信息可以来自于XML配置文件、属性文件、Groovy配置文件等。
+
+1.3 对beanFactory准备工作
+prepareBeanFactory(beanFactory)方法为beanFactory进行容器刷新前的准备工作，可以分为如下几类：
+1.3.1 初始化Spring组件
+包括类加载器BeanClassLoader、Aware处理器ApplicationContextAwareProcessor、属性编辑器PropertyEditorRegistrar、bean表达式解析器BeanExpressionResolver、监听器监测器ApplicationListenerDetector；
+注意：ApplicationListenerDetector在前后两次被加入到容器的beanPostProcessors属性中。
+1.3.2 beanFactory其他属性初始化
+对框架引入的Aware接口，如EnvironmentAware、ApplicationEventPublisherAware、MessageSourceAware、ApplicationContextAware等，需要添加到ignoreDependencyInterfaces属性中标记不需要进行依赖检查和自动注入；
+因为ApplicationContextAwareProcessor组件对于实现Aware接口的类在回调过程中设置了属性信息。
+1.3.3 LTW配置
+AOP切面的织入方式有三种：编译阶段，通过特殊的编译器实现，如AspectJ；类加载阶段，通过LTW实现；运行时，通过JDK或者CGLIB动态代理实现。工作中未见过LTW的实际使用场景，不是本文关注的对象。
+1.3.4 注入环境信息相关的Bean对象
+包括环境对象Bean(environment)，系统属性Bean(systemProperties)，系统环境变量Bean(systemEnvironment)，这些Bean对象的直接数据来源为System.getProperties()、System.getenv()，即将机器的环境变量信息使用Bean的方式进行了包装。
+
+1.4 postProcessBeanFactory
+预留给子类容器扩展，在容器刷新前进行的定制化操作。
+
+1.5 invokeBeanFactoryPostProcessors(beanFactory)
+Spring容器按照 PriorityOrder接口 > Ordered接口 > non的顺序依次调用BeanFactoryPostProcessor对象的postProcessBeanFactory方法。该方法为容器级别，即容器启动过程中postProcessBeanFactory之后调用一次。
+
+1.6 registerBeanPostProcessors(beanFactory)
+Spring容器按照 PriorityOrder接口 > Ordered接口 > non的顺序依次将BeanPostProcessor加入到IOC容器的beanPostProcessors属性中。在Bean对象的初始化阶段会调用BeanPostProcessor的勾子方法，即每个Bean在创建过程中都需要经历BeanPostProcessor的装饰和处理。
+另外，在该方法的最后，Spring再次将ApplicationListenerDetector加入到IOC中。
+
+1.7 initMessageSource();
+初始化国际化资源
+
+1.8 initApplicationEventMulticaster();
+初始化Spring容器的事件广播器
+
+1.9 onRefresh();
+预留给子类容器扩展，扩展向IOC容器注册单例Bean前的定制行为。SpringBoot对此方法进行了扩展，后续在介绍SpringBoot启动流程时进行详细介绍。
+
+2.0 registerListeners
+registerListeners()方法做了两件事件：
+（1）向事件广播器注册监听器
+在Spring容器的事件广播器被初始化前，向Spring容器注册的监听器都会保存在this.applicationListeners属性上：
+因此，需要在事件广播器被初始化后，将监听器注册到广播器上：
+
+同时，从IOC中取出所有ApplicationListener类型的Bean对象，即用户自定义的监听器对象，将其注册到Spring事件广播器上：
+
+2）触发earlyEvent
+在容器的准备阶段，Spring对this.earlyApplicationEvents属性进行了初始化，即不会为空；当向Spring容器发生事件时，被记录在this.earlyApplicationEvents属性中：
+
+在事件广播器被初始化后，需要立刻触发寄存在this.earlyApplicationEvents属性中的事件，并将this.earlyApplicationEvents属性设置为空，以保证后续的事件触发可以经过广播器，不再寄存于this.earlyApplicationEvents属性：
