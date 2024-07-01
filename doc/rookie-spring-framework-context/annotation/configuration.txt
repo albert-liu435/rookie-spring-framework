@@ -1,5 +1,15 @@
 ConfigurationClassPostProcessor 是 Spring 框架中的一个后置处理器，主要用于处理带有 @Configuration 注解的配置类。它在 Spring 容器启动时会扫描并解析这些配置类，并进行相关的处理。
 
+AnnotationConfigApplicationContext#AnnotationConfigApplicationContext-->AnnotatedBeanDefinitionReader#AnnotatedBeanDefinitionReader-->AnnotationConfigUtils#registerAnnotationConfigProcessors-->AnnotationConfigUtils#registerAnnotationConfigProcessors
+
+方法：	public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
+			BeanDefinitionRegistry registry, @Nullable Object source)
+
+查看是否包含org.springframework.context.annotation.internalConfigurationAnnotationProcessor的bean定义，不包含的话就创建一个ConfigurationClassPostProcessor,并添加到BeanDefinitionRegistry集合中。同理AutowiredAnnotationBeanPostProcessor，EventListenerMethodProcessor，DefaultEventListenerFactory都一样类似。
+
+ConfigurationClassPostProcessor实例化过程及执行postProcessBeanFactory方法，AbstractApplicationContext#refresh()-->PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors()-->ConfigurationClassPostProcessor#postProcessBeanFactory()-->ConfigurationClassPostProcessor#enhanceConfigurationClasses
+
+
 以下是 ConfigurationClassPostProcessor 的主要作用和特点：
 
 处理配置类：
