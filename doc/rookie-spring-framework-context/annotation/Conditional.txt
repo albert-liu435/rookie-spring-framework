@@ -1,3 +1,4 @@
 参考文档：https://juejin.cn/post/6844904200401321997
 
 在实例化Bean的时候，会进行判断，执行流程为
+org.springframework.context.annotation#ConfigurationClassPostProcessor#processConfigBeanDefinitions-->org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForConfigurationClass-->org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForBeanMethod-->org.springframework.context.annotation.ConditionEvaluator#shouldSkip

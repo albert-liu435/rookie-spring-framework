@@ -1,5 +1,9 @@
 package com.rookie.bigdata.springframework.context.annotation.conditional;
 
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+
 /**
  * @Author rookie
  * @Description TODO

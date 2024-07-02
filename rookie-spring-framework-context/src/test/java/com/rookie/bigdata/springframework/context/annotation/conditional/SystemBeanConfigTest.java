@@ -1,10 +1,10 @@
 package com.rookie.bigdata.springframework.context.annotation.conditional;
 
-import com.rookie.bigdata.springframework.context.annotation.configuration.MyConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Map;
+
 
 /**
  * @Author rookie
@@ -33,13 +33,12 @@ class SystemBeanConfigTest {
     public void test2() {
         AnnotationConfigApplicationContext annotationConfigApplicationContext = new AnnotationConfigApplicationContext(SystemBeanConfig.class);
 
-        String osName = applicationContext.getEnvironment().getProperty("os.name");
+        String osName = annotationConfigApplicationContext.getEnvironment().getProperty("os.name");
         java.lang.System.out.println(osName);
-        Map<String, System> beans = applicationContext.getBeansOfType(System.class);
+        Map<String, System> beans = annotationConfigApplicationContext.getBeansOfType(System.class);
         java.lang.System.out.println(beans);
     }
 
 }
 
 
-}
