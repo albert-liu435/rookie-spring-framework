@@ -1,5 +1,7 @@
-package com.rookie.bigdata.springframework.context.annotation.configuration;
+package com.rookie.bigdata.springframework.context.annotation.configuration.anno1;
 
+import com.rookie.bigdata.springframework.context.annotation.configuration.anno1.MyConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -11,6 +13,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * @Date 2024/6/28 10:17
  * @Version 1.0
  */
+@Slf4j
 class MyConfigTest {
 
     @Test

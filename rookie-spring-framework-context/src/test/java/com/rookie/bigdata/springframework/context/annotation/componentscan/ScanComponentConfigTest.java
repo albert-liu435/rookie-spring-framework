@@ -1,16 +1,8 @@
 package com.rookie.bigdata.springframework.context.annotation.componentscan;
 
-import com.rookie.bigdata.springframework.context.annotation.configuration.MyConfig;
-import com.rookie.bigdata.springframework.context.lifecycle.HelloBeanA;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class ScanComponentConfigTest

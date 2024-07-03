@@ -1,11 +1,8 @@
 package com.rookie.bigdata.springframework.context.lifecycle.anno;
 
-import com.rookie.bigdata.springframework.context.annotation.configuration.MyConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class ConfigATest
