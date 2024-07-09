@@ -1,0 +1,3 @@
+https://github.com/xuchengsheng/spring-reading/blob/master/spring-aware/spring-aware-importAware/README.md
+
+用法可以参考Spring Security中的EnableWebSecurity注解

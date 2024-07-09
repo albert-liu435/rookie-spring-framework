@@ -29,90 +29,39 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter</artifactId>-->
-<!--            &lt;!&ndash;            <version>5.10.2</version>&ndash;&gt;-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <!--            <version>5.10.2</version>-->
+            <scope>test</scope>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-<!--            <version>3.26.0</version>-->
+            <!--            <version>3.26.0</version>-->
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
 
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+        </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.slf4j</groupId>-->
-        <!--            <artifactId>slf4j-api</artifactId>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>commons-codec</groupId>-->
-        <!--            <artifactId>commons-codec</artifactId>-->
-        <!--        </dependency>-->
-        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <groupId>com.github.binarywang</groupId>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <artifactId>qrcode-utils</artifactId>&ndash;&gt;-->
-        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
-
-        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <groupId>org.jodd</groupId>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <artifactId>jodd-http</artifactId>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <scope>provided</scope>&ndash;&gt;-->
-        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
-        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <groupId>org.jodd</groupId>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <artifactId>jodd-util</artifactId>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <version>6.1.0</version>&ndash;&gt;-->
-        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
-
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.commons</groupId>-->
-        <!--            <artifactId>commons-lang3</artifactId>-->
-        <!--        </dependency>-->
-
-        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <groupId>org.bouncycastle</groupId>&ndash;&gt;-->
-        <!--&lt;!&ndash;            <artifactId>bcpkix-jdk18on</artifactId>&ndash;&gt;-->
-        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
-
-        <!--        <dependency>-->
-        <!--            <groupId>ch.qos.logback</groupId>-->
-        <!--            <artifactId>logback-classic</artifactId>-->
-        <!--            <scope>test</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.testng</groupId>-->
-        <!--            <artifactId>testng</artifactId>-->
-        <!--            <scope>test</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.assertj</groupId>-->
-        <!--            <artifactId>assertj-guava</artifactId>-->
-        <!--            <scope>test</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.google.inject</groupId>-->
-        <!--            <artifactId>guice</artifactId>-->
-        <!--            <scope>test</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.projectlombok</groupId>-->
-        <!--            <artifactId>lombok</artifactId>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.google.code.gson</groupId>-->
-        <!--            <artifactId>gson</artifactId>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>javax.servlet</groupId>-->
-        <!--            <artifactId>javax.servlet-api</artifactId>-->
-        <!--            <version>4.0.1</version>-->
-        <!--            <optional>true</optional>-->
-        <!--            <scope>provided</scope>-->
-        <!--        </dependency>-->
     </dependencies>
 
 
