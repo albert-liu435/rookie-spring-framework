@@ -1,4 +1,4 @@
-package com.rookie.bigdata.springframework.core.io;
+package com.rookie.bigdata.springframework.core.io.resource;
 
 /**
  * @Class MyClassPathResource
