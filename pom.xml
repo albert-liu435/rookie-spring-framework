@@ -33,6 +33,7 @@
         <module>rookie-spring-framework-beans</module>
         <module>rookie-spring-framework-context</module>
         <module>rookie-spring-framework-core</module>
+        <module>rookie-spring-framework-expression</module>
     </modules>
 
     <properties>
