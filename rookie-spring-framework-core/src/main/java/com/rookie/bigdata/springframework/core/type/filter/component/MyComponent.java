@@ -1,6 +1,7 @@
 package com.rookie.bigdata.springframework.core.type.filter.component;
 
-import com.rookie.bigdata.springframework.core.type.metadata.metadatareader.anno.MyAnnotation;
+
+import com.rookie.bigdata.springframework.core.type.filter.anno.MyAnnotation;
 
 /**
  * @Class MyComponent

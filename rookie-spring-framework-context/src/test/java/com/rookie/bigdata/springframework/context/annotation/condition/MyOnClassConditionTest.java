@@ -30,7 +30,7 @@ class MyOnClassConditionTest {
         Resource[] resources = resolver.getResources("classpath*:com/rookie/bigdata/springframework/context/annotation/condition/**/*.class");
 
         // 创建自定义条件类的实例，用于条件匹配
-        Condition condition = new MyOnClassCondition("com.xcs.spring.ConditionDemo1");
+        Condition condition = new MyOnClassCondition("com.rookie.bigdata.springframework.context.annotation.condition.MyOnClassConditionTest1");
 
         // 遍历每个资源，判断是否满足自定义条件
         for (Resource resource : resources) {

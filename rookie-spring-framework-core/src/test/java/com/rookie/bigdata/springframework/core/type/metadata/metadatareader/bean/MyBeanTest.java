@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class MyBeanTest
- * @Description
+ * @Description https://github.com/xuchengsheng/spring-reading?tab=readme-ov-file
  * @Author rookie
  * @Date 2024/7/9 10:14
  * @Version 1.0

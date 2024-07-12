@@ -22,6 +22,7 @@ class PersonValidatorTest {
         //创建一个Person对象实例
         Person person=new Person();
         person.setName(null);
+//        person.setName("zhangsan");
         person.setAge(130);
 
         //创建一个BeanPropertyBindingResult对象，用于存储验证过程中的错误
