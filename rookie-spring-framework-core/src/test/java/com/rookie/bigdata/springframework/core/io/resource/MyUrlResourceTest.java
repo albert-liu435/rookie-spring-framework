@@ -22,6 +22,9 @@ class MyUrlResourceTest {
 
     @Test
     void test01() throws Exception {
+
+        ClassLoader classLoader = MyUrlResource.class.getClassLoader();
+
         Resource resource = new UrlResource("https://dist.apache.org/repos/dist/test/test.txt");
         try (InputStream is = resource.getInputStream()) {
             // 读取和处理资源内容

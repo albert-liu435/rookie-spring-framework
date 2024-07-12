@@ -23,6 +23,9 @@ class MyBeanTest {
     @Test
     void getMessage() throws Exception{
 
+        ClassLoader classLoader = MyBean.class.getClassLoader();
+
+
         //创建要加载的资源对象
         Resource resource=new ClassPathResource("sample.xml");
 

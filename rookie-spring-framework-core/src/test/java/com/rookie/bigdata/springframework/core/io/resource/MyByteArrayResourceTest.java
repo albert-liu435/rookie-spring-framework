@@ -23,6 +23,9 @@ class MyByteArrayResourceTest {
 
     @Test
     void test01() throws Exception {
+
+        ClassLoader classLoader = MyByteArrayResource.class.getClassLoader();
+
         byte[] data = "hello world".getBytes();
         Resource resource = new ByteArrayResource(data);
         try (InputStream is = resource.getInputStream()) {

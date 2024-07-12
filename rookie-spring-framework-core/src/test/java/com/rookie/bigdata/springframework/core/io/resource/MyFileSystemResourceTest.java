@@ -22,6 +22,7 @@ class MyFileSystemResourceTest {
 
     @Test
     void test01()throws Exception{
+        ClassLoader classLoader = MyFileSystemResource.class.getClassLoader();
         // 请替换你自己的目录
         String path = "C:\\work\\NewIDEAWorkSpace\\rookie-project\\github-albert-liu435\\rookie-spring-framework\\rookie-spring-framework-core\\myfile.txt";
         Resource resource = new FileSystemResource(path);

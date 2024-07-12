@@ -21,6 +21,8 @@ class MyClassPathResourceTest {
 
     @Test
     void test01()throws Exception{
+        ClassLoader classLoader = MyClassPathResource.class.getClassLoader();
+
         String path = "application.properties";
         Resource resource = new ClassPathResource(path);
         try (InputStream is = resource.getInputStream()) {

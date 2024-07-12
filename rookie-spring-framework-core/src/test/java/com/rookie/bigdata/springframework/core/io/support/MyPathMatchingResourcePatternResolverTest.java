@@ -20,6 +20,10 @@ class MyPathMatchingResourcePatternResolverTest {
 
     @Test
     void test01()throws Exception{
+
+
+        ClassLoader classLoader = MyPathMatchingResourcePatternResolver.class.getClassLoader();
+
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
         // 加载所有匹配的类路径资源

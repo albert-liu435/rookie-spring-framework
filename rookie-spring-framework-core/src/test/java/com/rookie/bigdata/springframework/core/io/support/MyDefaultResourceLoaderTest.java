@@ -20,6 +20,9 @@ class MyDefaultResourceLoaderTest {
 
     @Test
     void test01(){
+
+        ClassLoader classLoader = MyDefaultResourceLoader.class.getClassLoader();
+
         DefaultResourceLoader loader = new DefaultResourceLoader();
 
         // 从类路径加载资源

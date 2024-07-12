@@ -23,6 +23,9 @@ class MyInputStreamResourceTest {
 
     @Test
     void test01()throws Exception{
+
+        ClassLoader classLoader = MyInputStreamResource.class.getClassLoader();
+
         InputStream isSource = new ByteArrayInputStream("hello world".getBytes());
         Resource resource = new InputStreamResource(isSource);
         try (InputStream is = resource.getInputStream()) {
