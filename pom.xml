@@ -34,6 +34,7 @@
         <module>rookie-spring-framework-context</module>
         <module>rookie-spring-framework-core</module>
         <module>rookie-spring-framework-expression</module>
+        <module>rookie-springbootweb</module>
     </modules>
 
     <properties>
@@ -44,7 +45,8 @@
         <maven.compiler.target>17</maven.compiler.target>
 
 
-        <spring.version>6.1.10</spring.version>
+        <spring.version>6.1.11</spring.version>
+<!--        <spring.version>6.1.10</spring.version>-->
 
 
         <!--        <httpclient.version>4.5.13</httpclient.version>-->
