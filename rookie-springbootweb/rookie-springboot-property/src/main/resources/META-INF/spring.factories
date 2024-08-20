@@ -1,0 +1,7 @@
+# PropertySource Loaders
+org.springframework.boot.env.PropertySourceLoader=\
+com.rookie.bigdata.boot.env.TxtPropertySourceLoader
+
+
+#org.springframework.boot.env.PropertiesPropertySourceLoader
+#org.springframework.boot.env.YamlPropertySourceLoader

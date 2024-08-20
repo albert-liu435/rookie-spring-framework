@@ -1,0 +1,68 @@
+1、spring-boot启动的时候加载配置文件流程
+    org.springframework.boot.SpringApplication#prepareEnvironment()
+    --->org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationEnvironmentPreparedEvent()
+        --->org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor#postProcessEnvironment()
+            --->org.springframework.boot.context.config.ConfigDataEnvironment#processAndApply()
+                --->org.springframework.boot.context.config.ConfigDataEnvironment#processInitial()
+                    --->org.springframework.boot.context.config.ConfigDataEnvironmentContributors#withProcessedImports()
+                        --->org.springframework.boot.context.config.ConfigDataEnvironmentContributors#withProcessedImports()
+                            --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                                --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                                    -->org.springframework.boot.context.config.ConfigDataImporter#load()
+                                        --->org.springframework.boot.context.config.ConfigDataLoaders#load()
+                                            --->org.springframework.boot.context.config.StandardConfigDataLoader#load()
+                                                --->org.springframework.boot.env.YamlPropertySourceLoader#load()
+    EnvironmentPostProcessorApplicationListener能够监听是因为在spring.factories文件中配置了该监听器
+
+
+2、自定义applicaton.txt
+    我们观察application.properties和application.yml文件的处理类分别为PropertiesPropertySourceLoader和YamlPropertySourceLoader,所以我们也可以仿照PropertiesPropertySourceLoader写一个自己的实现类TxtPropertySourceLoader,并在classpath:路径下添加application.txt和META-INF/spring.factories文件，其中META-INF/spring.factories文件添加如下：
+    # PropertySource Loaders
+    org.springframework.boot.env.PropertySourceLoader=\
+    com.rookie.bigdata.boot.env.TxtPropertySourceLoader
+    我们在TxtPropertySourceLoaderTest进行测试，发现 成功了，这就是我们自定义applicaton.txt的原理
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
