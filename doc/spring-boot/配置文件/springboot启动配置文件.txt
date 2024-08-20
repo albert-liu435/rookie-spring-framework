@@ -22,8 +22,30 @@
     com.rookie.bigdata.boot.env.TxtPropertySourceLoader
     我们在TxtPropertySourceLoaderTest进行测试，发现 成功了，这就是我们自定义applicaton.txt的原理
 
+3、spring.profiles.active=dev的理解
+    当设置spring.profiles.active=dev的时候，会将该属性设置到Profiles对象上面，后面加载配置文件的时候，会通过该方法org.springframework.boot.context.config.ConfigDataEnvironment#processAndApply()进行加载，对于spring.profiles.active=dev的理解，如下
+	void processAndApply() {
+		ConfigDataImporter importer = new ConfigDataImporter(this.logFactory, this.notFoundAction, this.resolvers,
+				this.loaders);
+		registerBootstrapBinder(this.contributors, null, DENY_INACTIVE_BINDING);
+		ConfigDataEnvironmentContributors contributors = processInitial(this.contributors, importer);
+		ConfigDataActivationContext activationContext = createActivationContext(
+				contributors.getBinder(null, BinderOption.FAIL_ON_BIND_TO_INACTIVE_SOURCE));
+				//加载不包含dev的配置文件，如 application.properties
+		contributors = processWithoutProfiles(contributors, importer, activationContext);
+		//解析Profiles
+		activationContext = withProfiles(contributors, activationContext);
+		//加载包含dev的配置文件，如 application-dev.properties
+		contributors = processWithProfiles(contributors, importer, activationContext);
+		applyToEnvironment(contributors, activationContext, importer.getLoadedLocations(),
+				importer.getOptionalLocations());
+	}
 
-
+    application-dev.properties的加载过程主要如下：
+        org.springframework.boot.context.config.ConfigDataEnvironmentContributors#withProcessedImports()
+            --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                --->org.springframework.boot.context.config.ConfigDataLocationResolvers#resolve()
+                    --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#resolveProfileSpecific()
 
 
 
