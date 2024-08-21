@@ -43,4 +43,24 @@ class EnvironmentServiceImplTest {
         log.info("获取的springConfigName为:{}",springConfigName);
     }
 
+
+
+    @Test
+    void testSpringConfigLocation(){
+        String locationValue=environment.getProperty("com.rookie.bigdata.spring.config.location");
+        log.info("获取的locationValue为:{}",locationValue);
+        String devValue=environment.getProperty("application.yml.dev");
+        log.info("获取的devValue为:{}",devValue);
+
+    }
+
+    @Test
+    void testSpringConfigAdditionalLocation(){
+        String locationValue=environment.getProperty("com.rookie.bigdata.spring.config.location");
+        log.info("获取的locationValue为:{}",locationValue);
+        String devValue=environment.getProperty("application.yml.dev");
+        log.info("获取的devValue为:{}",devValue);
+
+    }
+
 }
