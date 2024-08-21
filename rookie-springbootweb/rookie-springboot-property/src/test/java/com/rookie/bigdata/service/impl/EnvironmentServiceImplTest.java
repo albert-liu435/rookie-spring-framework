@@ -36,4 +36,11 @@ class EnvironmentServiceImplTest {
 
     }
 
+    @Test
+    void testSpringConfigName(){
+
+        String springConfigName = environment.getProperty("com.rookie.bigdata.spring.config.name");
+        log.info("获取的springConfigName为:{}",springConfigName);
+    }
+
 }

@@ -49,9 +49,10 @@
 
 
 
+4、spring.config.name的理解
+    spring.config.name配置信息可用参考StandardConfigDataLocationResolver类，里面有一个getConfigNames()方法，也就是获取spring.config.name的配置，如果为空则默认使用application，这个就是项目启动时要加载的配置文件,所以我们可用根据这个配置项来更改项目启动时加载的配置文件信息。如:在启动jar包的时候 用如下命令：java -jar myproject.jar --spring.config.name=myproject, 我们为了测试方便，直接在idea中进行设置，参考pic/1724203030399.png
 
-
-
+5、spring.config.location
 
 
 
