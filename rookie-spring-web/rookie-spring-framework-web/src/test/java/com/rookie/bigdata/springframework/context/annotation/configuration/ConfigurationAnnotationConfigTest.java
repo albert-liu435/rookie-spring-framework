@@ -19,6 +19,7 @@ class ConfigurationAnnotationConfigTest {
 
     @Test
     void testContainer() {
+
         //容器执行流程
         AnnotationConfigApplicationContext context =
                 new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);

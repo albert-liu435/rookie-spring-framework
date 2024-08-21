@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/context
+         https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--    <context:component-scan base-package="com.rookie.bigdata.springframework.context.support.xml.service"/>-->
+
+    <!--    <bean id="helloBeanA" class="com.rookie.bigdata.springframework.context.lifecycle.HelloBeanA"/>-->
+
+    <bean class="com.rookie.bigdata.springframework.context.lifecycle.MyInstantiationAwareBeanPostProcessor"/>
+
+    <bean id="userLifeCycle" class="com.rookie.bigdata.springframework.context.lifecycle.UserLifeCycle"
+          init-method="myInit" destroy-method="myDestory">
+        <!-- 构造函数注入 -->
+        <constructor-arg index="0" type="int">
+            <value>1</value>
+        </constructor-arg>
+        <constructor-arg index="1" type="java.lang.String">
+            <value>微信公众号</value>
+        </constructor-arg>
+
+        <!-- setter方法注入 -->
+        <property name="id" value="2"/>
+        <property name="name" value="rookie"/>
+    </bean>
+
+    <bean class="com.rookie.bigdata.springframework.context.lifecycle.MyBeanPostProcessor"/>
+    <bean class="com.rookie.bigdata.springframework.context.lifecycle.MyBeanFactoryPostProcessor"/>
+
+</beans>

@@ -8,8 +8,23 @@
     }
 项目工程为：rookie-spring-framework-web
 
-在启动的时候主要执行org.springframework.context.support.AbstractApplicationContext中的refresh()方法，所以我们主要分析该方法即可
+Spring的启动流程可以归纳为三个步骤：
 
+    1、初始化Spring容器，注册内置的AnnotatedBeanDefinitionReader将的eanDefinition注入到容器中
+    2、将配置类的BeanDefinition注册到容器中
+    3、调用refresh()方法刷新容器
+参考图片：./启动流程/001.png
+一、初始化流程
+    spring容器的初始化时，通过this()调用了无参构造函数，主要做了以下三个事情：
+    1   实例化BeanFactory【DefaultListableBeanFactory】工厂，用于生成Bean对象
+    2   实例化AnnotatedBeanDefinitionReader注解配置读取器，用于对特定注解（如@Service、@Repository）的类进行读取转化成  BeanDefinition 对象，（BeanDefinition 是 Spring 中极其重要的一个概念，它存储了 bean 对象的所有特征信息，如是否单例，是否懒加载，factoryBeanName 等）。代码运行到这里时候，Spring 容器已经构造完毕，那么就可以为容器添加一些内置组件了，其中最主要的组件便是 ConfigurationClassPostProcessor 和 AutowiredAnnotationBeanPostProcessor ，前者是一个 beanFactory 后置处理器，用来完成 bean 的扫描与注入工作，后者是一个 bean 后置处理器，用来完成 @AutoWired 自动注入。
+    3   实例化ClassPathBeanDefinitionScanner路径扫描器，用于对指定的包目录进行扫描查找 bean 对象
+
+二、注册ConfigurationAnnotationConfig配置类到容器中
+    将SpringConfig注册到容器中：org.springframework.context.annotation.AnnotatedBeanDefinitionReader#doRegisterBean：这个步骤主要是用来解析用户传入的 Spring 配置类，解析成一个 BeanDefinition 然后注册到容器中
+
+
+三、refresh()方法
 refresh()方法的主线逻辑如下所示可被分为12个步骤，AbstractApplicationContext进行了相当程度的实现，子类也可基于此进行扩展：
 
 public void refresh() throws BeansException, IllegalStateException {
@@ -86,6 +101,7 @@ public void refresh() throws BeansException, IllegalStateException {
 ============================以上是BeanFactoty的创建和预准备工作==============================================
 
 5   invokeBeanFactoryPostProcessor(beanFactory); 执行BeanFactoryPostProcessor
+参考图片: ./启动流程/PostProcessorRegistrationDelegate.jpeg
         Spring容器按照 PriorityOrder接口 > Ordered接口 > non的顺序依次调用BeanFactoryPostProcessor对象的postProcessBeanFactory方法。该方法为容器级别，即容器启动过程中postProcessBeanFactory之后调用一次。
         BeanFactoryPostProcessor：BeanFactory的后置处理器。在BeanFactory标准初始化之后执行的。主要涉及到两个接口，BeanFactoryPostProcessor、BeanDefinitionRegistryPostProcessor
     5.1 执行invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors)
