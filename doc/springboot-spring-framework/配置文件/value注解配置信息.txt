@@ -1,0 +1,17 @@
+
+
+org.springframework.beans.factory.support.DefaultListableBeanFactory#doResolveDependency()
+org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver#getSuggestedValue()
+org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver#findValue()
+获取上面的注解的value,
+
+后面通过注解的value找到真实的值，最终时通过PropertySourcesPropertyResolver进行解析的
+
+org.springframework.beans.factory.support.AbstractBeanFactory#resolveEmbeddedValue()
+org.springframework.core.env.PropertySourcesPropertyResolver#resolveRequiredPlaceholders()
+org.springframework.util.PropertyPlaceholderHelper#replacePlaceholders()
+org.springframework.core.env.PropertySourcesPropertyResolver#getProperty()
+org.springframework.boot.web.servlet.context.ApplicationServletEnvironment#getProperty()
+org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertyResolver#getProperty()
+
+这样就将注解替换为真实的值并加入到BeanDefinition，后面实例化的时候就会时真实的值了

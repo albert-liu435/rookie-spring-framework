@@ -34,7 +34,8 @@
         <module>rookie-spring-framework-context</module>
         <module>rookie-spring-framework-core</module>
         <module>rookie-spring-framework-expression</module>
-        <module>rookie-springbootweb</module>
+        <module>rookie-spring-web</module>
+        <module>rookie-springboot-web</module>
     </modules>
 
     <properties>
