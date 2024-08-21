@@ -55,12 +55,22 @@
 5、spring.config.location与spring.config.additional-location
     spring.config.location与上面的spring.config.name配置方式时一致的,用于指定配置文件替代springboot中的默认配置文件
     --spring.config.location=classpath:/pro/a.yml
-    同理spring.config.additional-location与spring.config.name的配置方式一致，spring.config.additional-location用于添加额外的配置，
+    同理spring.config.additional-location与spring.config.name的配置方式一致，spring.config.additional-location用于添加额外的配置文件，
     --spring.config.additional-location=classpath:/pro/a.yml
 
+5、配置文件的优先级与加载顺序
+    系统默认加载配置文件的顺序是classpath:/,classpath:/config,file:./,file:./config，配置文件的优先级恰好相反。当使用spring.config.location指定配置文件时将会替换掉以上默认位置的配置；例如，如果spring.config.location的配置是classpath:/custom-config/,file:./custom-config/，那么优先级顺序。1、file:./custom-config/ 2、classpath:/custom-config/。pring.config.additional-location指定配置文件，该属性是用来指定默认配置之外的位置的配置文件，系统会有限使用指定的外部配置；例如，如果指定的配置是classpath:/custom-config/,file:./custom-config/，那么优先级顺序将会是
+    file:./custom-config/
+    classpath:custom-config/
+    file:./config/
+    file:./
+    classpath:/config/
+    classpath:/
 
 
-
+参考：https://blog.csdn.net/weixin_44411039/article/details/132077006
+https://www.cnblogs.com/teach/p/16322420.html
+https://blog.csdn.net/yaomingyang/article/details/105636832
 
 具体可用参考：https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html
 
