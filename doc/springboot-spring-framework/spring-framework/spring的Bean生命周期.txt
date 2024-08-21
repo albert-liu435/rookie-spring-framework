@@ -1,0 +1,40 @@
+Spring的Bean的生命周期
+我们以下面这段代码来进行分析
+@Slf4j
+class UserLifeCycleTest {
+
+    @Test
+    void test01() {
+        AbstractApplicationContext context = new ClassPathXmlApplicationContext("springframework/context/lifecycle/lifecycle-spring.xml");
+        final String[] beanDefinitionNames = context.getBeanDefinitionNames();
+        Arrays.stream(beanDefinitionNames).forEach(beanDefinitionName -> log.info("name contains {}.", beanDefinitionName));
+
+        UserLifeCycle userLifeCycle = (UserLifeCycle) context.getBean("userLifeCycle");
+        log.info("UserLifeCycle: {}", userLifeCycle);
+    }
+
+}
+整体流程查看图：./pic/lifecycle/Bean生命周期.png
+Bean的实例化触发时机是在 org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization(beanFactory);也就是在这个方法执行之前需要将Bean的元数据全部都加载到Spring的容器中
+对与上面的实例，加载流程是在org.springframework.context.support.AbstractRefreshableApplicationContext#refreshBeanFactory()中进行的
+加载元数据流程图./pic/lifecycle/元数据加载.png
+
+一 元数据加载
+org.springframework.context.support.AbstractRefreshableApplicationContext#refreshBeanFactory()
+    --->org.springframework.context.support.AbstractXmlApplicationContext#loadBeanDefinitions()
+        --->org.springframework.beans.factory.support.AbstractBeanDefinitionReader#loadBeanDefinitions()
+            --->org.springframework.beans.factory.xml.XmlBeanDefinitionReader#doLoadBeanDefinitions()
+                --->org.springframework.beans.factory.xml.XmlBeanDefinitionReader#registerBeanDefinitions()
+                    --->org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#registerBeanDefinitions()
+                        --->org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReaderdoRegisterBeanDefinitions()
+
+
+
+
+
+
+
+参考文章:
+
+
+https://cloud.tencent.com/developer/article/2216932
