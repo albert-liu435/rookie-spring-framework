@@ -38,3 +38,4 @@ org.springframework.context.support.AbstractRefreshableApplicationContext#refres
 
 
 https://cloud.tencent.com/developer/article/2216932
+https://segmentfault.com/a/1190000040365130
