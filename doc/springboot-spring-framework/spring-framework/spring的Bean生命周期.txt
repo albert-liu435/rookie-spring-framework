@@ -87,7 +87,14 @@ org.springframework.context.support.AbstractApplicationContext#refresh()
 		        2、执行getBean和doGetBean方法
 		    --->org.springframework.beans.factory.support.AbstractBeanFactory#getBean()
 		        --->org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean()
-
+		            --->org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton()
+		                    3、执行createBean()和doCreateBean()方法
+		                --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean()
+                            --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean()
+                                    4、通过createBeanInstance实例化Bean对象
+                                --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBeanInstance()
+                                        5、调用initializeBean()方法初始化
+                                    --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean()
 
 
 1	Bean构建触发时机
@@ -95,38 +102,50 @@ org.springframework.context.support.AbstractApplicationContext#refresh()
 
 2	执行getBean和doGetBean方法
 	    doGetBean的主线逻辑可以分为如下五个步骤：
-        2.1	从父亲容器中获取Bean对象
-        如果当前容器中不存在beanName对应的Bean定义，Spring会尝试通过调用父容器的getBean方法获取Bean对象。
-        注意：父容器不能获取子容器中的Bean对象, 而子容器可以获取父容器中的Bean对象(因为子容器通过parentBeanFactory属性持有了父容器的引用)。
+        2.1	从父亲容器中获取Bean对象 parentBeanFactory.getBean(nameToLookup)
+            如果当前容器中不存在beanName对应的Bean定义，Spring会尝试通过调用父容器的getBean方法获取Bean对象。注意：父容器不能获取子容器中的Bean对象, 而子容器可以获取父容器中的Bean对象(因为子容器通过parentBeanFactory属性持有了父容器的引用)。
+        2.2 校验BeanDefinition checkMergedBeanDefinition(mbd, beanName, args)
+            校验逻辑在checkMergedBeanDefinition方法中实现。
+        2.3 处理依赖关系 String[] dependsOn = mbd.getDependsOn();
+            如果当前beanName对应的Bean对象存在依赖的Bean时，优先通过getBean方法处理被依赖的Bean对象。如果存在相互依赖，则抛出BeanCreationException异常。
+        2.4 构造Bean对象 if (mbd.isSingleton()) {
+            根据Bean的类型走不同的构造流程，当Bean为单例时，执行如下逻辑构造Bean对象：
+                首先尝试从单例池中根据beanName获取Bean对象，如果不为空——>直接返回；否则调用beforeSingletonCreation方法,进行创建单例Bean的时候进行回调，然后调用createBean(beanName, mbd, args)构造Bean对象(前后环绕着beforeSingletonCreation和afterSingletonCreation方法)。addSingleton(beanName, singletonObject)用于将创建好的对象加入到单例池中并清理缓存。
 
-	[2] 校验BeanDefinition
-	校验逻辑在checkMergedBeanDefinition方法中实现。
+3   执行执行createBean()和doCreateBean()方法创建Bean实例
+    3.1 用resolveBeforeInstantiation方法构造Bean对象
+    3.2 调用doCreateBean方法构造Bean对象
+        3.2.1   调用createBeanInstance(beanName, mbd, args)实例化Bean对象；
+        3.2.2   将半成品的Bean对象加入三级缓存；addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean))
+        3.2.3   对Bean对象进行属性设置；populateBean(beanName, mbd, instanceWrapper)
+        3.2.4   对Bean对象执行初始化；initializeBean(beanName, exposedObject, mbd)
+        3.2.5   注册实现了DisposableBean接口的Bean对象；registerDisposableBeanIfNecessary(beanName, bean, mbd);
+        3.2.6   返回构建完成的Bean对象。
 
-	[3] 处理依赖关系
-	如果当前beanName对应的Bean对象存在依赖的Bean时，优先通过getBean方法处理被依赖的Bean对象。
-	如果存在相互依赖，则抛出BeanCreationException异常。
+4   通过createBeanInstance实例化Bean对象
+    4.1 校验Bean对象的字节码对象：必须为public且存在public的构造方法
+    4.2 supplier接口或者工厂方法不为空的，使用对应的构造流程构造Bean对象
+    4.3 使用Bean的构造函数构造Bean对象
+        4.3.1   根据Bean的具体情况选择调用autowireConstructor或者instantiateBean方法进行实例化；并引入了两个标记变量：resolved表示构造函数是否已经完成过解析；autowireNecessary表示是否调autowireConstructor方法进行实例化。
+        4.3.2   另外，BeanDefinition对象的constructorArgumentsResolved属性用于标记是否已进行过构造函数推断(true表示使用autowireConstructor方法实例化Bean对象，false表示使用instantiateBean方法)，是一种优化：当同一个BeanDefinition被多次用于构造Bean对象时，不需要执行重复的推断步骤；该属性针对的是Prototype类型的Bean对象，对单例Bean没有优化的意义。
+        4.3.3   determineConstructorsFromBeanPostProcessors(beanClass, beanName)也是一个钩子函数，用于干预构造函数的选择：如果用户自定义了SmartInstantiationAwareBeanPostProcessor实现类，且返回了通过determineConstructorsFromBeanPostProcessors(beanClass, beanName)为对应的bean确定了构造函数，则使用该构造函数实例化Bean对象。
 
-	[4] 构造Bean对象
-	根据Bean的类型走不同的构造流程，当Bean为单例时，执行如下逻辑构造Bean对象：
+        其实，不看具体实现而仅从上述代码逻辑也可以推断出来：instantiateBean(beanName, mbd)表示调用无参构造函数实例化对象，而autowireConstructor(beanName, mbd, ctors, args)使用有参构造函数。
+        autowireConstructor方法封装了一个重要的概念，构造函数推断：
+        （1）当存在使用@Autowired注解的构造函数时，使用被@Autowired注解的构造函数实例化对象；
+        （2）当只有一个构造函数时，使用该构造函数；
+        （3）当存在多个构造函数且存在默认构造函数时，使用默认构造函数；
+        （4）当存在多个构造函数且不存在默认构造函数时，抛出异常。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+5   调用initializeBean()方法初始化
+    5.1 调用Aware接口，进行Aware相关属性的设置
+    5.2 调用BeanPostProcessor的postProcessBeforeInitialization()方法
+    5.2 执行初始化方法
+    5.4 调用BeanPostProcessor的postProcessAfterInitialization方法
 
 
 
+实例化流程可以参考：./pic/lifecycle/Bean实例化流程1.png
 
 
 
