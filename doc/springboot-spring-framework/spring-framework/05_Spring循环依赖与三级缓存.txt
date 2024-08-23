@@ -1,0 +1,53 @@
+本篇所使用的测试类如下
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.context.lifecycle.circulate.CirculateConfigTest#testCirculate()
+
+
+一   Spring循环依赖问题如图
+
+./pic/lifecycle/circulate/01_循环依赖.png
+./pic/lifecycle/circulate/02_循环依赖.png
+
+
+二   三级缓存
+    1   三级缓存介绍
+            1.1 DefaultListableBeanFactory的父类DefaultSingletonBeanRegistry中定义了三个属性，作为Spring的三级缓存：
+                    /** Cache of singleton objects: bean name to bean instance. */
+                    private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
+
+                    /** Cache of early singleton objects: bean name to bean instance. */
+                    private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
+
+                    /** Cache of singleton factories: bean name to ObjectFactory. */
+                    private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
+                1.1.1 singletonObjects作为一级缓存, 也是IOC容器的单例池，存放创建好的成品对象(完成了实例化、属性设置和初始化等流程，可直接对外使用)；
+                1.1.2 earlySingletonObjects作为二级缓存，存放的是半成品的Bean对象, 用于提前暴露对象(该对象来源于三级缓存)；
+                1.1.3 singletonFactories作为三级缓存: 存放用于构造Bean对象的lambda表达式，本质是Bean对象创建工厂。
+            1.2 当从IOC容器查找Bean对象时，查找顺序为：一级->二级->三级, 代码如下：
+                protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+                    // 1.从一级缓存中根据beanName获取Bean对象
+                    Object singletonObject = this.singletonObjects.get(beanName);
+                    if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+                        synchronized (this.singletonObjects) {
+                            // 2.从二级缓存中根据beanName获取Bean对象
+                            singletonObject = this.earlySingletonObjects.get(beanName);
+                            if (singletonObject == null && allowEarlyReference) {
+                                // 3.先从三级缓存中根据beanName获取ObjectFactory并调用getObject获取Bean对象
+                                // 对应一个lambda表达式
+                                ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
+                                if (singletonFactory != null) {
+                                    singletonObject = singletonFactory.getObject();
+                                    this.earlySingletonObjects.put(beanName, singletonObject);
+                                    this.singletonFactories.remove(beanName);
+                                }
+                            }
+                        }
+                    }
+                    return singletonObject;
+                }
+
+    2   循环依赖执行流程
+        如图：./pic/lifecycle/circulate/03_循环依赖.png
+
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128761386
