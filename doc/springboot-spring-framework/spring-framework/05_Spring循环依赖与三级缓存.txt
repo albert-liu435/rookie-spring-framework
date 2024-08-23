@@ -48,6 +48,34 @@
 
     2   循环依赖执行流程
         如图：./pic/lifecycle/circulate/03_循环依赖.png
+        2.1 当从IOC容器获取ComponentA对象时，进入对象ComponentA的Bean生命周期；首先实例化ComponentA对象，此时ComponentA对象未经过属性注入，是一个半成品；然后将包裹ComponentA对象的lambda表达式存入三级缓存。ObjectFactory是一个函数式接口(仅有一个接口)，传入的lambda表达式() -> getEarlyBeanReference(beanName, mbd, bean)会以匿名类的形式传参；因此从singletonFactories三级缓存中获取到ObjectFactory对象并调用其getObject()方法时，会执行该lambda表达式以获取Bean对象(如需代理，为代理后的对象)。
+        2.2 进入ComponentA对象的属性注入阶段，对b属性的注入, 堆栈的调用链进入从容器中获取ComponentB对象;
+        2.3-2.4 获取ComponentB对象时进入ComponentB的Bean生命周期；完成ComponentB对象的实例化并存入三级缓存，过程同步骤2.1
+        2.5 进入ComponentB对象的属性注入阶段，进行a属性的注入，尝试从IOC容器获取ComponentA对象；
+        2.6 从容器中获取ComponentA对象: 调用三级缓存中的lambda表达式，构建出ComponentA对象(可能是代理后的对象)，然后将该Bean对象存入二级缓存，并从三级缓存中删除。
+            此时，Spring三级缓存中存在beanName为componentA对应的记录。去除该记录(lambda表达式)执行后，得到一个半成品对象，如果该Bean对象需要被代理，则返回的是代理后的Bean对象。并将该记录放入到二级缓存中，然后删除三级缓存中的记录
+        2.7 当对象B完成依赖注入及后续的初始化操作后，将B对象放入到一级缓存中
+        2.8 调用链返回至对象A的属性注入阶段，将从单例池中获取的ComponentB对象注入到b属性中；A完成属性注入和后续的初始化等流程后，将A对象存入一级缓存，并删除二级缓存中的A对象；过程同2.7
+
+
+
+三   三级缓存的原因
+    3.1 spring解决循环依赖的核心思想在于提前暴露引用，因此需要引入缓存；由于一级缓存是作为单例池存在，因此提前暴露的对象不能放在一级缓存而需要另外开辟缓存。如2.1中例子，本质上如果没有代理情况发生，只需要两级缓存就能解决循环依赖问题
+    3.2 第三级缓存的作用
+        当A对象需要被代理时，bean的生命周期如下所示：如图：./pic/lifecycle/circulate/04_循环依赖.png
+        按照Bean的生命周期，代理操作在初始化阶段的BPP(BeanPostProcessor)执行；因此，上述ComponentB在属性注入阶段得到的ComponentA对象应是原始Bean对象(ComponentA对象的生命周期暂停在了属性设置阶段—未进入初始化阶段)。
+        为了解决上述问题，Spring引入了第三级缓存，该缓存中存放lambda表达式；当执行该表达式时，如果ComponentA需要代理，则可以将ComponentA对象在初始化阶段的AOP操作提前至ComponentB属性设置阶段；因此ComponentB的a属性注入的对象是代理后的对象。既然将AOP操作提前了，因此需要引入一个标志(this.earlyProxyReferences)使得ComponentA的Bean对象在初始化阶段的AOP过程可以得到已被代理的信息：
+
+    3.3 第二级缓存的作用
+        第三级缓存的作用章节可知，只需要第一级缓存和第三级缓存就可以解决ComponentA和ComponentB的循环依赖，即使ComponentA或ComponentB需要被代理。如图：./pic/lifecycle/circulate/05_循环依赖.png
+        如上所示：ComponentA对象同时与ComponentB和ComponentC对象存在循环依赖问题；ComponentB和ComponentC对象在属性设置阶段获取ComponentA对象时，两次都会从第三级缓存中得到相同的lambda表达式并执行获取代理对象；但两次获取到的代理对象不同，违背了ComponentA单例的原则。
+        因此，Spring引入第二级缓存并与第三级缓存配合，共同解决上述问题：第一次通过lambda表达式得到代理对象，然后将代理对象存入二级缓存并删除三级缓存；第二次直接从二级缓存中查询，而不需要再次执行lambda表达式。
+
+
+
+
+
+
 
 文章来源：
 https://blog.csdn.net/Sheng_Q/article/details/128761386
