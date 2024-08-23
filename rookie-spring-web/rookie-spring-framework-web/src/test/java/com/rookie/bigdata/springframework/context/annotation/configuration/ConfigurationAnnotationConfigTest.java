@@ -2,7 +2,10 @@ package com.rookie.bigdata.springframework.context.annotation.configuration;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,6 +28,21 @@ class ConfigurationAnnotationConfigTest {
                 new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);
         ConfigurationAnnotationConfig config = context.getBean(ConfigurationAnnotationConfig.class);
     }
+
+
+    @Test
+    void testSupplier(){
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);
+        // 定义一个BeanDefinition
+        GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
+        // Bean由HashMap::new创建
+        beanDefinition.setInstanceSupplier(HashMap::new);
+        // 注册
+        context.registerBeanDefinition("map", beanDefinition);
+        System.out.println(context.getBean("map"));
+    }
+
+
 
 
     @Test
