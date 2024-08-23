@@ -1,0 +1,17 @@
+
+
+一   依赖注入
+    常见的注入方式有属性注入和构造函数注入。属性注入方式要求JavaBean中存在默认构造函数以及对应的设置方法(而不是对应的属性)；构造函数注入方式要求JavaBean中存在匹配的构造函数。
+    选择何种方式依赖于实际应用。如果JavaBean属性较为固定或重要，不能对外开放设值能力，此时可以使用构造函数注入；如果JavaBean的属性较多且类型接近时，使用构造函数会影响代码的可读性，此时可使用属性注入方式。
+    另外：使用属性注入方式时需要处理好JavaBean的变量名规范化以及属性设置方法的匹配问题等；使用构造函数注入时，需要考虑到循环依赖问题。
+
+
+
+流程图
+./pic/lifecycle/inject/01构造函数推断.png
+./pic/lifecycle/inject/Autowired流程1.png
+./pic/lifecycle/inject/Autowired流程2.png
+./pic/lifecycle/inject/Resource流程2.png
+
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128277673
