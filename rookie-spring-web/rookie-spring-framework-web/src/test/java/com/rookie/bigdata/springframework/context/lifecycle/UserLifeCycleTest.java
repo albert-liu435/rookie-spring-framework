@@ -27,6 +27,10 @@ class UserLifeCycleTest {
 
         UserLifeCycle userLifeCycle = (UserLifeCycle) context.getBean("userLifeCycle");
         log.info("UserLifeCycle: {}", userLifeCycle);
+
+        context.close();
+
+
     }
 
 }

@@ -12,7 +12,7 @@ import org.springframework.beans.factory.*;
  * @Version 1.0
  */
 @Slf4j
-public class UserLifeCycle implements BeanNameAware, BeanClassLoaderAware, BeanFactoryAware, InitializingBean {
+public class UserLifeCycle implements BeanNameAware, BeanClassLoaderAware, BeanFactoryAware, InitializingBean,DisposableBean {
 
 
     private int id;
@@ -54,32 +54,36 @@ public class UserLifeCycle implements BeanNameAware, BeanClassLoaderAware, BeanF
 
     @Override
     public void setBeanName(String name) {
-        log.info("BeanNameAware：{}", name);
+        log.error("5. BeanNameAware：{}", name);
     }
 
     @Override
     public void setBeanClassLoader(ClassLoader classLoader) {
-        log.info("BeanClassLoaderAware:{}", classLoader);
+        log.error("6. BeanClassLoaderAware:{}", classLoader);
     }
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        log.info("BeanFactoryAware:{}", beanFactory);
+        log.error("7. BeanFactoryAware:{}", beanFactory);
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        log.info("InitializingBean:afterPropertiesSet");
+        log.error("9. InitializingBean:afterPropertiesSet");
     }
 
     public void myInit() {
-        log.info("调用myInit()，将maxSpeed设置为240。");
+        log.error("10. 调用myInit()，将maxSpeed设置为240。");
 
     }
 
     public void myDestory() {
-        log.info("调用myDestroy()。");
+        log.error("调用myDestroy()。");
     }
 
 
+    @Override
+    public void destroy() throws Exception {
+        log.error("调用DisposableBean#destroy()");
+    }
 }

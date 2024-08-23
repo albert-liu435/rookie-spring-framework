@@ -59,22 +59,55 @@ org.springframework.context.support.AbstractRefreshableApplicationContext#refres
 二   Bean的生命周期
     每个Bean的生命周期都包括：实例化、属性设置、初始化、入单例池、销毁等阶段，整个流程可表示为 ./pic/lifecycle/生命周期四阶段.png
 
+    1   实例化阶段
+        实例化阶段的核心目的是生成Bean对象，过程包括构造函数的推断与选择、通过反射调用目标构造函数实例化Bean对象。
+        Spring在框架中引入了InstantiationAwareBeanPostProcessor接口，提供了操作对象实例化的切入点；用户可以继承InstantiationAwareBeanPostProcessor接口自定义实例化对象过程。
+    2   属性设置阶段
+        属性设置阶段的核心任务是对已实例化的Bean对象根据配置进行属性设置。
+        InstantiationAwareBeanPostProcessor接口的postProcessProperties方法也提供给了用户干扰属性设置的能力。
+        MergedBeanDefinitionPostProcessor接口提供了操作Beandefinition信息的能力，也可以基于Beandefinition提取相关信息；如AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor在实现依赖注入时使用MergedBeanDefinitionPostProcessor进行依赖注入前的数据准备工作。
+    3   初始化阶段
+        初始化阶段是Spring框架为Bean对象自定义的一个阶段，目的在于当Bea对象完成实例化和属性注入后可以执行一些扩展方法。
+        该阶段按执行顺序包括：Aware接口的执行与相关Aware属性的设置、执行BeanPostProcessor的前置方法、执行初始化方法、执行BeanPostProcessor的后置方法。
+        其中，BeanPostProcessor的后置方法是依赖注入、AOP等实现原理(后续Spring系列文章中会反复见到BeanPostProcessor的后置方法)。
+        该阶段的核心逻辑是执行初始化方法，按照调用顺序包括：InitializingBean接口的afterPropertiesSet()方法 和
+        xml配置文件中通过Init-method属性指定的初始化方法。
+    4   销毁阶段
+        当容器被注销时，会销毁单例池中的Bean对象，此时进入Bean对象生命周期的销毁阶段，该阶段按照执行顺序包括：DisposableBean的destroy()方法和xml配置文件中通过destory-method属性指定的方法。
 
 
 
+三   Bean构建过程
+    Bean的生成过程中触发时机为在执行org.springframework.beans.factory.support.DefaultListableBeanFactory#preInstantiateSingletons()这个方法的时候开始的，主要执行流程如下
+
+1、Bean构建触发时机
+org.springframework.context.support.AbstractApplicationContext#refresh()
+	--->org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization()
+		--->org.springframework.beans.factory.support.DefaultListableBeanFactory#preInstantiateSingletons()
+		        2、执行getBean和doGetBean方法
+		    --->org.springframework.beans.factory.support.AbstractBeanFactory#getBean()
+		        --->org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean()
 
 
 
+1	Bean构建触发时机
+	    Bean构建的时候，最终调用的是DefaultListableBeanFactory#preInstantiateSingletons()方法，该方法对beanDefinitionNames进行了两次遍历：第一次遍历时对于非延迟的单例Bean调用getBean(beanName)方法构造Bean对象；第二次对于实现了SmartInitializingSingleton接口的Bean对象调用其afterSingletonsInstantiated方法，执行用户的自定义操作。
 
+2	执行getBean和doGetBean方法
+	    doGetBean的主线逻辑可以分为如下五个步骤：
+        2.1	从父亲容器中获取Bean对象
+        如果当前容器中不存在beanName对应的Bean定义，Spring会尝试通过调用父容器的getBean方法获取Bean对象。
+        注意：父容器不能获取子容器中的Bean对象, 而子容器可以获取父容器中的Bean对象(因为子容器通过parentBeanFactory属性持有了父容器的引用)。
 
+	[2] 校验BeanDefinition
+	校验逻辑在checkMergedBeanDefinition方法中实现。
 
+	[3] 处理依赖关系
+	如果当前beanName对应的Bean对象存在依赖的Bean时，优先通过getBean方法处理被依赖的Bean对象。
+	如果存在相互依赖，则抛出BeanCreationException异常。
 
-
-
-
-
-
-
+	[4] 构造Bean对象
+	根据Bean的类型走不同的构造流程，当Bean为单例时，执行如下逻辑构造Bean对象：
 
 
 

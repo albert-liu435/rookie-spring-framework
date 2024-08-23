@@ -18,7 +18,7 @@ public class MyBeanPostProcessor implements BeanPostProcessor {
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         if ("userLifeCycle".equals(beanName)) {
 //            System.out.println("8. 调用 BeanPostProcessor.postProcessBeforeInitialization() 方法");
-            log.info("8. 调用 BeanPostProcessor.postProcessBeforeInitialization() 方法");
+            log.error("8. 调用 BeanPostProcessor.postProcessBeforeInitialization() 方法");
         }
         return bean;
     }
@@ -27,7 +27,7 @@ public class MyBeanPostProcessor implements BeanPostProcessor {
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         if ("userLifeCycle".equals(beanName)) {
 //            System.out.println("11. 调用 BeanPostProcessor.postProcessAfterInitialization() 方法");
-            log.info("11. 调用 BeanPostProcessor.postProcessAfterInitialization() 方法");
+            log.error("11. 调用 BeanPostProcessor.postProcessAfterInitialization() 方法");
         }
         return bean;
     }

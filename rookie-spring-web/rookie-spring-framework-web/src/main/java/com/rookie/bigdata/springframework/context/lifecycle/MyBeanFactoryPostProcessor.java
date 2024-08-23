@@ -18,6 +18,6 @@ public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 //        System.out.println("0. 调用 BeanFactoryPostProcessor.postProcessBeanFactory() 方法");
-        log.info("0. 调用 BeanFactoryPostProcessor.postProcessBeanFactory() 方法");
+        log.error("0. 调用 BeanFactoryPostProcessor.postProcessBeanFactory() 方法");
     }
 }

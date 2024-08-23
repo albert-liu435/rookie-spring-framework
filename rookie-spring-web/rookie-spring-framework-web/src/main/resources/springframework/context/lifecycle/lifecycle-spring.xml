@@ -7,9 +7,9 @@
          http://www.springframework.org/schema/context
          https://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!--    <context:component-scan base-package="com.rookie.bigdata.springframework.context.support.xml.service"/>-->
 
-    <!--    <bean id="helloBeanA" class="com.rookie.bigdata.springframework.context.lifecycle.HelloBeanA"/>-->
+
+    <bean class="com.rookie.bigdata.springframework.context.lifecycle.MySmartInitializingSingleton"/>
 
     <bean class="com.rookie.bigdata.springframework.context.lifecycle.MyInstantiationAwareBeanPostProcessor"/>
 
