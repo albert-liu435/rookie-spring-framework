@@ -1,0 +1,19 @@
+
+spring:
+  profiles:
+    active: dev
+#  config:
+#    additional-location: classpath:/pro/a.yml
+#  config:
+#    location: classpath:/pro/a.yml
+server:
+  port: 8080
+
+
+com:
+  rookie:
+    bigdata:
+      beans:
+        factory:
+          annotation:
+            value: rookie

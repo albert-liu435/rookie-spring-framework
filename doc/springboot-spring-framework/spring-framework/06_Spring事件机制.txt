@@ -1,0 +1,76 @@
+本篇所使用的测试类如下
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.context.event.listener.EventConfigTest#testListener()
+
+
+一   事件机制
+    如图:./pic/lifecycle/event/01_event.png
+
+
+组件间的交互流程为：
+(1) 监听器向事件广播器注册(订阅)，携带关心的事件信息；
+(2) 用户通过事件发布器向事件广播器发送事件；
+(3) 事件广播器获取相关的监听器列表，并向监听器分别发送通知；
+(4) 监听器收到事件后，进行响应和处理；
+
+二   Spring事件原理
+    1.1 基于接口的实现原理
+        基于ApplicationListener接口实现事件机制依赖于ApplicationListenerDetector的能力.从类的继承关系分析：ApplicationListenerDetector是MergedBeanDefinitionPostProcessor接口实现类，即ApplicationListenerDetector被注入到容器的beanPostProcessor后，后续引入的Bean在完成实例化后且属性设置前会调用ApplicationListenerDetector的postProcessMergedBeanDefinition方法；同时MergedBeanDefinitionPostProcessor又是BeanPostProcessor接口继承者，即ApplicationListenerDetector也是BeanPostProcessor，当后续引入的Bean完成属性设置、初始化后会调用postProcessAfterInitialization方法。可以参考Spring的启动流程。
+        其中主要涉及到如下两个类的方法:org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory()，org.springframework.context.support.AbstractApplicationContext#registerBeanPostProcessors()
+        1.1.1   调用ApplicationListenerDetector的postProcessMergedBeanDefinition()方法
+            当Bean对象完成实例化后，通过org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean()方法方法调用调用ApplicationListenerDetector#postProcessMergedBeanDefinition方法,将实现ApplicationListener接口的Bean及其是否单例信息存入singletonNames中
+        1.1.2   调用AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsBeforeInitialization()方法，当Bean完成属性初始化的时候调用applyBeanPostProcessorsBeforeInitialization()方法
+        1.1.3   调用org.springframework.context.support.ApplicationListenerDetector#postProcessAfterInitialization()方法
+            当Bean对象完成属性注入、初始化后调用postProcessAfterInitialization方法
+            1.1.3.1 将ApplicationListener实现类的Bean对象通过this.applicationContext.addApplicationListener((ApplicationListener<?>) bean);添加到Spring容器的监听器属性及注册到事件广播器上。这里IF判断存在的根源是 ApplicationListenerDetector在Spring容器启动过程中被注册到容器的BeanPostProcessor中的时机
+        1.1.4   Spring容器引入ApplicationListenerDetector
+            容器启动过程中在不同阶段会进行共计两次注册，这里需要结合Spring容器的启动流程进行介绍
+            1.1.4.1 代码中注释的【向Spring容器注册BeanPostProcessor】表示将BeanPostProcessor实现类的Bean对象添加到IOC容器的beanPostProcessors属性: private final List beanPostProcessors = new CopyOnWriteArrayList();
+
+                    后续Bean的初始化前后会依次调用beanPostProcessors中的BeanPostProcessor对象的接口，这里不再赘述，Spring系列专题文章中有详细介绍。
+                    如前文所述：ApplicationListenerDetector是MergedBeanDefinitionPostProcessor(和BeanDefinitionPostProcessor)接口实现类，该类的核心功能发生在后续Bean的初始化完成后。对于业务使用者而言，在finishBeanFactoryInitialization(beanFactory);过程；也就是说，只要保证【向Spring容器注册BeanPostProcessor】操作在finishBeanFactoryInitialization(beanFactory); 之前执行即可。
+                    这里可以深究一下为什么需要注册两次，这里对这部分细节不关心的读者可以选择跳过。
+                在prepareBeanFactory(beanFactory)阶段【向Spring容器注册BeanPostProcessor】
+                    在准备阶段执行，是为了控制ApplicationListenerDetector的影响范围，保证后续引入的ApplicationListener类型的Bean对象不会丢失，包括Spring自身引入的，如下图所示：
+                    以及业务引入的(作为ApplicationListener，同时也是BeanFactoryPostProcessor或者BeanPostProcessor接口的实现类)对象。在registerListeners();步骤注册的就是这些监听器
+                在registerBeanPostProcessors(beanFactory)阶段【向Spring容器注册BeanPostProcessor】
+                    如注释：再次注册的目的是为了将ApplicationListenerDetector放在所有BeanPostProcessor最后，以获取代理对象等。因为Spring AOP也是基于BeanPostProcessor，ApplicationListenerDetector需要注册代理之后的ApplicationListener对象，所以Detect操作需要在代理操作完成后执行，即放在最后是保险方案。
+
+        1.2 基于注解的实现原理
+            基于注解的实现原理依赖EventListenerMethodProcessor和DefaultEventListenerFactory的能力
+            1.2.1   EventListenerMethodProcessor类作用
+                从类的继承关系分析：EventListenerMethodProcessor是SmartInitializingSingleton和BeanFactoryPostProcessor接口实现类：(1) 在容器启动之初调用BeanFactoryPostProcessor的postProcessBeanFactory接口；(2) 在所有的Bean初始化完成后执行SmartInitializingSingleton的afterSingletonsInstantiated接口
+            1.2.2   容器启动之初，调用postProcessBeanFactory方法
+                    该部分核心逻辑是初始化EventListenerFactory工厂，默认为DefaultEventListenerFactory. 一般业务侧并不会实现EventListenerFactory，即postProcessBeanFactory可以理解为从IOC容器中获取DefaultEventListenerFactory对象并复制给eventListenerFactories属性
+            1.2.3   在所有的Bean初始化完成后执行SmartInitializingSingleton的afterSingletonsInstantiated接口
+                该接口逻辑比较简单，对IOC容器中的所有Bean对象获取beanName和type后调用processBean(beanName, type)方法。下面是processBean方法的主体逻辑
+                调用MethodIntrospector.selectMethods接口遍历指定类型的所有方法，对于每个方法根据AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class) 获得@EventListener注解合并的属性值(@EventListener不允许重复注解)。
+                接口返回Map<Method, EventListener>类型的annotatedMethods集合对象，其中key为方法对象，value为注解在方法上的@EventListener解析生成的对象。
+                如果annotatedMethods为空表明该类中没有方法被@EventListener注解—直接返回；否则遍历annotatedMethods对象，并通过DefaultEventListenerFactory针对每个被注解的方法生成一个ApplicationListenerMethodAdapter类型的ApplicationListener事件监听器，在初始化后注册到Spring容器
+                这里，再次进入Spring容器的addApplicationListener方法.上述代码context.addApplicationListener(applicationListener);发生在所有非Lazy单例Bean被初始化后，即applicationEventMulticaster已在initApplicationEventMulticaster()步骤被初始化过—不为空：此时同时向事件广播器进行了注册
+        1.3 DefaultEventListenerFactory类作用
+            上述过程涉及DefaultEventListenerFactory为每个被@EventListener注解的方法生产ApplicationListenerMethodAdapter对象的过程：当onApplicationEvent接口被调用时，ApplicationListenerMethodAdapter对象依次调用processEvent、doInvoke方法，通过反射调用目标方法。
+
+    2.1 事件广播器
+        Spring容器启动时在AbstractApplicationContext的refresh()方法中存在初始化事件广播器步骤，进入initApplicationEventMulticaster()方法。逻辑比较简单，如果IOC工厂没有"applicationEventMulticaster"名称的Bean对象，就new一个SimpleApplicationEventMulticaster对象并注册到IOC容器中。这里需要注意：Spring默认创建的SimpleApplicationEventMulticaster对象的内置线程池为空。
+        2.1.1   SimpleApplicationEventMulticaster类功能介绍
+                核心是对外通过监听器注册/注销接口、事件发布的接口
+                如上所示，对外提供两个重载的multicastEvent方法，接受ApplicationEvent类型的参数以及接受ApplicationEvent和ResolvableType组合的参数；ResolvableType如果为空，框架会使用new ResolvableType(clazz)为ApplicationEvent实现类生成对应的ResolvableType对象。其中，核心处理逻辑在void multicastEvent(final ApplicationEvent event, @Nullable ResolvableType eventType)中：根据事件类型以及事件对象获取相关(匹配、感兴趣)的监听器对象集合，并遍历该集合调用invokeListener方法；另外，如果用户为SimpleApplicationEventMulticaster的taskExecutor属性设置类线程池对象，则将调用invokeListener方法的逻辑提交给taskExecutor线程池对象处理。跟进invokeListener(ApplicationListener<?> listener, ApplicationEvent event)：这里给予用户在框架内部处理异常的能力，而不是简单向外抛出；用法同taskExecutor，即为SimpleApplicationEventMulticaster对象的errorHandler属性赋值ErrorHandler对象。 跟进doInvokeListener(ApplicationListener listener, ApplicationEvent event)：逻辑较为简单：调用监听器的onApplicationEvent方法。
+            监听器注册与注销是互为相反的操作，因此这里仅展示注册逻辑：
+                接受ApplicationListener对象或beanName作为参数，将其分别添加到defaultRetriever属性的applicationListeners和applicationListenerBeans中；可以看一下SimpleApplicationEventMulticaster的defaultRetriever属性的内部结构.注意框架使用两个属性保存监听器信息；这是为了照顾到已完成实例化的Bean对象和部分BeanDefintion未被实例化的场景。存放的方式决定着读取的方式，当获取全量监听器或者根据事件类型和事件对象获取相关的监听器时，需要从这两个属性中获取并集。以前者为例
+
+    2.3 事件发布器
+        [1] 如果入参event的类型不是ApplicationEvent，使用PayloadApplicationEvent进行封装；
+        [2] 从applicationEventMulticaster属性获取事件广播器, 并调用广播事件接口;
+        [3] 如果Spring容器的父容器不为空，调用父容器的事件发布接口进行事件发布；
+
+
+
+
+
+
+
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128266563
+https://juejin.cn/post/7140849555607650335#heading-0
+https://www.cnblogs.com/rickiyang/p/12001524.html

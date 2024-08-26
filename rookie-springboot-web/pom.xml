@@ -12,6 +12,7 @@
     <modules>
         <module>rookie-springboot-parameter</module>
         <module>rookie-springboot-property</module>
+        <module>rookie-springboot-webmvc</module>
 
     </modules>
     <artifactId>rookie-springboot-web</artifactId>
