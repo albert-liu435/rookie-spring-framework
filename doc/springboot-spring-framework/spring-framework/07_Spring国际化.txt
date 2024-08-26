@@ -1,0 +1,7 @@
+本篇所使用的测试类如下
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.context.messagesource.i18n.SpringResourceBundleTest#test01()
+
+本篇所使用的测试类如下
+项目:rookie-springboot-webmvc
+测试类：com.rookie.bigdata.springframework.context.messagesource.i18n.SpringBootResourceBundleTest#testI18n()

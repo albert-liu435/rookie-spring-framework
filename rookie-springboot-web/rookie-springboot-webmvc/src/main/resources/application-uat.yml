@@ -1,6 +1,0 @@
-com:
-  rookie:
-    bigdata:
-      spring:
-        config:
-          name: springConfigName
