@@ -29,11 +29,10 @@
 
 
     <modules>
-        <module>rookie-spring-framework-aop</module>
         <module>rookie-spring-framework-beans</module>
         <module>rookie-spring-framework-context</module>
         <module>rookie-spring-framework-core</module>
-        <module>rookie-spring-framework-expression</module>
+
         <module>rookie-spring-web</module>
         <module>rookie-springboot-web</module>
     </modules>
@@ -45,21 +44,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
-
         <spring.version>6.1.11</spring.version>
-<!--        <spring.version>6.1.10</spring.version>-->
-
-
-        <!--        <httpclient.version>4.5.13</httpclient.version>-->
-        <!--        <hutool.version>5.8.28</hutool.version>-->
-
-        <!--        <httpclient.version>4.5.13</httpclient.version>-->
-        <!--        <jetty.version>9.4.51.v20230217</jetty.version>-->
-        <!-- 这个不能用10以上的版本，不支持jdk8-->
-        <!--    <jetty.version>9.4.51.v20230217</jetty.version>-->
-        <!-- 这个不能用10以上的版本，不支持jdk8-->
-
-        <!--        <spring-boot.version>2.5.15</spring-boot.version>-->
 
     </properties>
 

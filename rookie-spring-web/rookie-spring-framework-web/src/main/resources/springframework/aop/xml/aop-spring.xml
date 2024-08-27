@@ -1,0 +1,22 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+ http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+
+
+    <bean id="enhanceLog" class="com.rookie.bigdata.springframework.aop.xml.EnhanceLog"/>
+    <bean id="runnerService"
+          class="com.rookie.bigdata.springframework.aop.xml.impl.RunnerServiceImpl"/>
+
+    <aop:config>
+        <aop:pointcut id="runnerExecPc" expression="execution(* *.run(..))"/>
+
+        <aop:aspect ref="enhanceLog">
+            <aop:before method="beforeExec" pointcut-ref="runnerExecPc"/>
+            <aop:after method="afterExec" pointcut-ref="runnerExecPc"/>
+        </aop:aspect>
+    </aop:config>
+
+
+</beans>
