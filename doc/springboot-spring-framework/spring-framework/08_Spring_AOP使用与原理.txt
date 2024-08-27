@@ -1,3 +1,12 @@
+本篇所使用的测试类如下
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.aop.anno.AopDemoConfigurationTest#test01()
+
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.aop.methodinterceptor.impl.HelloServiceImplTest#run()
+
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.aop.xml.impl.RunnerServiceImplTest#run()
 
 
 
@@ -76,6 +85,205 @@ Spring AOP
         DefaultPointcutAdvisor包含一个切点和一个增强类型属性：Pointcut的默认值为Pointcut.TRUE表示所有目标类的所有方法均为连接点；Advice的默认值为EMPTY_ADVICE：Advice EMPTY_ADVICE = new Advice() {};, 即表示不进行增强。
 
 二   实现原理
+
+    2.1 EnableAspectJAutoProxy注解
+        @EnableAspectJAutoProxy可注解在启动类或者配置类上，开启AOP功能；该注解的核心作用是向容器中导入AnnotationAwareAspectJAutoProxyCreator并对其进行配置。
+        2.1.1   EnableAspectJAutoProxy注解
+            EnableAspectJAutoProxy的定义中存在两个布尔类型的属性，这两个属性最后会传递给AnnotationAwareAspectJAutoProxyCreator:
+            2.1.1.1 proxyTargetClass表示是否强制指定使用CGLIB代理，默认值为false；当指定为true时，AOP使用CGLIB代理(包含绝大部分场景，对业务代码而言成立)。可参考 Spring系列-9 Async注解使用与原理：文章最后对AOP使用何种代理类型进行了说明。
+            2.1.1.2 exposeProxy表示是否暴露代理对象，默认值为false; 当设置为true时，在目标对象内部通过AopContext.currentProxy()可以获取代理对象，可用于解决同一个类中方法相互调用导致代理失效问题，当然也可以用于解决此种场景下的事务失效问题，即事务-1 事务隔离级别和Spring事务传播机制文中章节-3.3涉及的注意事项。
+            此处需要注意：当exposeProxy设置为false时或使用AspectJ实现代理时，AopContext.currentProxy()会抛出异常。
+            除此之外，EnableAspectJAutoProxy注解中还声明了@Import(AspectJAutoProxyRegistrar.class)，AnnotationAwareAspectJAutoProxyCreator就是通过该Import导入至IOC容器中。
+        2.1.2   AspectJAutoProxyRegistrar
+                通过@Import导入的AspectJAutoProxyRegistrar是一个ImportBeanDefinitionRegistrar类型，代码如下：
+            2.1.2.1
+            逻辑较为简单：
+            [1] 通过AopConfigUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(registry);向IOC容器中添加AnnotationAwareAspectJAutoProxyCreator的Beandefinition;
+            [2] 获取注解EnableAspectJAutoProxy的定义信息，如果不为空，取出"proxyTargetClass"和"exposeProxy"信息，对AnnotationAwareAspectJAutoProxyCreator的Beandefinition对应属性进行设置，从而实现配置的传递。
+            org.springframework.aop.config.AopConfigUtils#registerOrEscalateApcAsRequired()
+            跟随调用链进入调用步骤-3时，如参cls为AnnotationAwareAspectJAutoProxyCreator.class字节码对象，
+            registry为IOC容器，source为null. 主线逻辑时将AnnotationAwareAspectJAutoProxyCreator.class信息封装成RootBeanDefinition(同时设置优先级和基础设置角色信息)，并制定beanName为"org.springframework.aop.config.internalAutoProxyCreator"，然后添加到IOC容器仓储中。
+            方法中存在一个if判断，当容器仓储中存在beanName为"org.springframework.aop.config.internalAutoProxyCreator"的BeanDefinition时，根据优先级进行替换，即注入更高优先级的Bean。优先级的定义在AopConfigUtils类中：
+
+            private static final List<Class<?>> APC_PRIORITY_LIST = new ArrayList<>(3);
+
+            static {
+            	// Set up the escalation list...
+            	APC_PRIORITY_LIST.add(InfrastructureAdvisorAutoProxyCreator.class);
+            	APC_PRIORITY_LIST.add(AspectJAwareAdvisorAutoProxyCreator.class);
+            	APC_PRIORITY_LIST.add(AnnotationAwareAspectJAutoProxyCreator.class);
+            }
+
+            如上述代码：按照定义顺序确定的优先级：AnnotationAwareAspectJAutoProxyCreator>AspectJAwareAdvisorAutoProxyCreator>InfrastructureAdvisorAutoProxyCreator.
+            至此，通过@EnableAspectJAutoProxy注解向IOC仓储中引入了AnnotationAwareAspectJAutoProxyCreator的BeanDefinition。
+
+            说明：当容器收集BeanPostProcessor类型的Bean对象时，会自动解析该BeanDefinition、实例化对象、属性设置并注入到IOC容器中，该部分逻辑可以参考Spring系列-2 Bean的生命周期，区别在于AnnotationAwareAspectJAutoProxyCreator的注入流程发生在Spring容器收集BeanPostProcessor类型的Bean对象时，而不是加载所有的非懒加载单例Bean。
+    2.2 AnnotationAwareAspectJAutoProxyCreator
+        AnnotationAwareAspectJAutoProxyCreator间接实现了SmartInstantiationAwareBeanPostProcessor接口，因此也实现了InstantiationAwareBeanPostProcessor和BeanPostProcessor接口.即实现了如下方法：
+        // SmartInstantiationAwareBeanPostProcessor接口中定义：
+        Object getEarlyBeanReference(Object bean, String beanName);
+
+        // InstantiationAwareBeanPostProcessor接口中定义：
+        Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName)；
+
+        // BeanPostProcessor接口中定义：
+        Object postProcessAfterInitialization(Object bean, String beanName);
+
+        这部分要求读者预先对Bean的生命周期、三级缓存和循环依赖等概念和流程比较清晰，可参考Spring系列的相关文章。以下对AOP流程分场景进行介绍，过程中会涉及上述三个方法。
+        2.2.1   普通Bean的AOP场景
+            如Spring系列-2 Bean的生命周期中对Bean生命周期的描述，在Bean对象的初始化后期会调用Object postProcessAfterInitialization(Object bean, String beanName);接口；
+            参考图片：./pic/aop/01_aop.png
+            进入AnnotationAwareAspectJAutoProxyCreator的postProcessAfterInitialization方法
+            逻辑较为简单：
+            1）根据bean的name和class类型获取cacheKey(读者可忽略细节，一般情况下直接认为等价于beanName，框架为了照顾不同场景做的一层封装)；
+            2）判断this.earlyProxyReferences集合中是否包含该beanName，this.earlyProxyReferences存放被提前暴露的Bean对象(循环依赖场景使用到)；本场景下this.earlyProxyReferences不包含beanName，因此进入return wrapIfNecessary(bean, beanName, cacheKey);逻辑；
+            3）wrapIfNecessary方法的核心逻辑是判断该Bean对象是否需要AOP, 如果需要返回代理后的对象，否则直接返回该对象，
+
+        2.2.2    自定义Bean对象场景
+            自定义Bean对象场景指用户通过InstantiationAwareBeanPostProcessor在postProcessBeforeInstantiation方法中定义了Bean对象，此时Bean的生命周期会直接进入BeanPostProcessor(此时为AnnotationAwareAspectJAutoProxyCreator)的postProcessAfterInitialization方法中
+            参考图片：./pic/aop/02_aop.png
+        2.2.3   循环依赖场景
+            首先交代一下结果：IOC容器完成刷新后，相互依赖的Bean对象依赖的是AOP后的代理对象，且代理对象中持有原始对象的引用。
+            循环依赖场景相对较为复杂，本章节结合案例进行介绍，案例同如下
+            参考图片：./pic/aop/03_aop.png
+            ComponentA和ComponentB对象相互依赖, 且ComponentA需要被AOP；当ComponentA先被初始化时，流程图如下所示
+            参考图片：./pic/aop/04_aop.png
+                【1】ComponentA对象实例化：
+                【2】ComponentA在完成Bean实例化后，如果IOC支持循环依赖，则将获取ComponentA对象的lambda表达式存入三级缓存
+                    注意，这里有个前提条件this.allowCircularReferences=true；；表示只有IOC容器支持循环依赖才会将该对象保存在三级缓存中。
+                    Spring项目中，该变量的定义如下：
+                    	private boolean allowCircularReferences = true;
+                    不进行特殊设置时，默认支持循环依赖。
+
+                    在SpringBoot项目中，项目启动时会进行属性的设置
+                    if (this.allowCircularReferences != null) {
+                    	beanFactory.setAllowCircularReferences(this.allowCircularReferences);
+                    }
+                    即不进行特殊设置时，默认为false，不支持循环依赖。
+
+                    () -> getEarlyBeanReference(beanName, mbd, bean) 该表达式在后文调用时再进行介绍。
+                【3】bean对象的初始化逻辑-包括属性注入和AOP代理
+                    在Bean对象的初始化流程中会依次完成属性的依赖注入(AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor) 和 AOP流程(AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor).
+                    【3-1】ComponentA开始执行属性注入
+                        在依赖注入阶段，首先尝试通过getBean方法从IOC中获取依赖的ComponentB对象，获取不到则进行创建：
+                        getSingleton(beanName, true);逻辑较为简单：依次从Spring的三级缓存中获取Bean对象，否则返回null对象。
+                        此时由于Spring容器未出实话ComponentB对象，getSingleton(String beanName)返回null, 从而触发创建ComponentB Bean对象的流程
+                    【3-2】ComponentB开始执行属性注入
+                        ComponentB在完成实例化和属性设置后，进行属性的依赖注入阶段，首先尝试通过getBean方法从IOC中获取依赖的ComponentB对象，获取不到则进行创建。此时，由于第三级缓存中存放了ComponentA对象相关的lambda表达式，会在执行getSingleton方法时进入以下逻辑
+                        从三级缓存中取出ComponentA对象，并将其保存在二级缓存中，同时删除三级缓存中对应的记录
+                    【3-3】通过三级缓存索取ComponentA对象：执行lambda表达式
+                        三级缓存的singletonFactory.getObject();调用了() -> getEarlyBeanReference(beanName, mbd, bean)，进入getEarlyBeanReference方法
+                        核心逻辑是调用getEarlyBeanReference方法获取Bean对象；
+                        getEarlyBeanReference方法逻辑极其简明：将"componentA"和ComponentA的原始Bean对象作为键值对存入缓存中，然后调用wrapIfNecessary方法返回代理后的ComponentA对象(以下问了理解和表述方便，使用ComponentA-agent Bean对象表示)。
+                    【3-4】ComponentB拿到代理对象后开始执行属性注入
+                        在从IOC中拿到ComponentA-agent Bean对象后进行ComponentB的依赖注入，之后将ComponentB加入IOC容器中；
+                        并将ComponentB对象返回。
+                    【3-5】ComponentA 完成属性注入
+                        在从IOC中拿到ComponentB的Bean对象后进行ComponentA的依赖注入，完成依赖注入后，进入ComponentA的AOP流程
+                    【3-6】ComponentA的AOP流程
+                        进入AbstractAutoProxyCreator的postProcessAfterInitialization方法：
+                            注意：此时参数中的bean对象是原始ComponentA对象。
+                            this.earlyProxyReferences中储存了"componentA"和ComponentA的原始Bean对象作为键值，因此this.earlyProxyReferences.remove(cacheKey) != bean将返回false, 即直接将原始ComponentA对象返回，不再做处理。
+                【4】逻辑判断—保证返回的是代理后的Bean对象
+                    在执行逻辑判断前，先梳理一下现状：
+
+                    1.Spring的第二级缓存中包含了ComponentA-agent Bean对象
+                    2.bean和exposedObject指向原始Bean对象
+
+                    继续进入ComponentA对象Bean生命周期的doCreateBean方法：
+                    通过getSingleton(beanName, false)将取出存放在二级缓存中的ComponentA-agent Bean对象；
+                    由于exposedObject和exposedObject指向原始Bean对象，因此需要将ComponentA-agent Bean对象赋值给exposedObject对象并返回。
+                    然后进入addSingleton代码逻辑：
+                    将ComponentA-agent Bean对象存入以及缓存，同时删除二级缓存中的相关记录。
+
+    2.3 AnnotationAwareAspectJAutoProxyCreator.wrapIfNecessary
+        在介绍wrapIfNecessary方法之前，先介绍或回顾一下需要关注的属性：
+        private final Set<String> targetSourcedBeans = Collections.newSetFromMap(new ConcurrentHashMap<>(16));
+
+        private final Map<Object, Object> earlyProxyReferences = new ConcurrentHashMap<>(16);
+
+        private final Map<Object, Class<?>> proxyTypes = new ConcurrentHashMap<>(16);
+
+        private final Map<Object, Boolean> advisedBeans = new ConcurrentHashMap<>(256);
+
+        targetSourcedBeans：存放自定义targetSource对象的beanName集合;
+        earlyProxyReferences：存放beanName和提前暴露的代理对象的映射关系；
+        proxyTypes：存放beanName和代理对象类型的映射关系；
+        advisedBeans：存放beanName和目标Bean对象是否需要被代理的映射关系；advisedBeans起缓存作用：对于不需要被代理的目标Bean对象进行标记(如AOP内部定义的类型)，从而不需要反复判断。
+
+        为突出主线逻辑，以下代码介绍时删除advisedBeans缓存(查询优化)和targetSourcedBeans(几乎用不到的自定义扩展)相关逻辑
+
+        protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
+        	// ⚠️1.如果是基础设施类或者满足shouldSkip规则的，不需要代理；
+        	if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
+        		return bean;
+        	}
+
+        	// 2.获取Bean对象相关的Advisor列表
+        	Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+
+        	// ⚠️3.如果Advisor列表为空(增强逻辑为空)，则不需要进行代理；否则根据specificInterceptors为bean创建代理对象
+        	if (specificInterceptors != null) {
+        		return createProxy(bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+        	} else {
+        		return bean;
+        	}
+        }
+           【1】判断是否跳过代理流程：
+                if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
+                	return bean;
+                }
+
+                对Advice、Pointcut、AopInfrastructureBean、Advisor、Aspect、AspectJPointcutAdvisor等类型以及使用@Aspect注解的Bean对象跳过代理流程。需要注意使用AspectJ技术生成的类型如果使用了@Aspect注解，则不会跳过代理：
+
+           【2】获取Bean对象相关的Advisor列表
+                Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+
+                    getAdvicesAndAdvisorsForBean调用栈进入findEligibleAdvisors方法：
+
+                    protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
+                    	List<Advisor> candidateAdvisors = findCandidateAdvisors();
+                    	List<Advisor> eligibleAdvisors = findAdvisorsThatCanApply(candidateAdvisors, beanClass, beanName);
+                    	extendAdvisors(eligibleAdvisors);
+                    	if (!eligibleAdvisors.isEmpty()) {
+                    		eligibleAdvisors = sortAdvisors(eligibleAdvisors);
+                    	}
+                    	return eligibleAdvisors;
+                    }
+
+                    逻辑较为清晰：
+                    (1) 获取所有的增强逻辑：
+                    Spring启动时会将所有的增强逻辑(Bean定义)添加到IOC中；此时根据Advisor类型和被@Aspect注解从IOC中获取增强对象；
+                    (2) 过滤增强逻辑得到与该Bean类型匹配的增强逻辑列表：
+                    过滤出符合该类型的所有增强逻辑，即根据切面中增强逻辑对应的切点是否匹配该类型；读者查询看部分代码时可以略过引介增强。
+                    (3) 排序增强逻辑列表并返回
+
+           【3】生成代理对象
+                createProxy方法的主线逻辑如下：
+                    protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
+                    		@Nullable Object[] specificInterceptors, TargetSource targetSource) {
+                    	ProxyFactory proxyFactory = new ProxyFactory();
+                    	proxyFactory.copyFrom(this);
+                    	if (!proxyFactory.isProxyTargetClass()) {
+                    		if (shouldProxyTargetClass(beanClass, beanName)) {
+                    			proxyFactory.setProxyTargetClass(true);
+                    		} else {
+                    			evaluateProxyInterfaces(beanClass, proxyFactory);
+                    		}
+                    	}
+                    	Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
+                    	proxyFactory.addAdvisors(advisors);
+                    	proxyFactory.setTargetSource(targetSource);
+                    	return proxyFactory.getProxy(getProxyClassLoader());
+                    }
+                该方法封装的逻辑输入是Bean对象和增强逻辑，输出是代理对象，即实现了将增强逻辑织入到Bean对象的功能，逻辑结构如下所示
+                参考图片：./pic/aop/05_aop.png
+
+
+
+
+
+
 
 
 
