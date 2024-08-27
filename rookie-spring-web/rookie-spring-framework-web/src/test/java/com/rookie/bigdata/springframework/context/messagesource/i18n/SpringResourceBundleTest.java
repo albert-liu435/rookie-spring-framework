@@ -39,6 +39,9 @@ class SpringResourceBundleTest {
         log.info("[en-US] 10000.msg is {}.", messageSource.getMessage("10000", null, Locale.US));
     }
 
+
+
+
     private MessageSource buildMessageSource() {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasenames("i18n/messages");

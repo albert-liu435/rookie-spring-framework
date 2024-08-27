@@ -5,3 +5,29 @@
 本篇所使用的测试类如下
 项目:rookie-springboot-webmvc
 测试类：com.rookie.bigdata.springframework.context.messagesource.i18n.SpringBootResourceBundleTest#testI18n()
+
+
+Spring提供的国际化接口为：MessageSource
+继承关系如图：./pic/lifecycle/i18n/01_i18n.png
+Spring共提供了四种实现类：DelegatingMessageSource, StaticMessageSource, ResourceBundleMessageSource, ReloadableResourceBundleMessageSource.
+常见为后两种: ResourceBundleMessageSource依赖于JDK提供的API，即依赖ResourceBundle.getBundle(basename, locale, classLoader, control)方法实现国际化；ReloadableResourceBundleMessageSource提供了定时更新国际化的能力而无需重启机器; 本文以ResourceBundleMessageSource为例介绍如何在Spring项目中使用国际化(ReloadableResourceBundleMessageSource使用与之类似)
+
+1   Spring国际化原理
+    1.1 在启动Spring容器时—执行refresh()的步骤中存在initMessageSource()方法
+        1.1.1   如果BeanFactory中存在beanName为"messageSource"的BeanDefinition： 实例化该BeanDefinition并将Bean对象设置给AbstractApplicationContext的messageSource属性；同时如果该Spring容器存在父容器且该国际化对象为HierarchicalMessageSource类型(具备父子结构), 则一并设置国际化对象的父子关系
+        1.1.2   不存在"messageSource"： 实例化一个DelegatingMessageSource类型的对象，并注册到IOC容器中，同时赋值给AbstractApplicationContext的messageSource属性。如注释// Use empty MessageSource to be able to accept getMessage calls ：DelegatingMessageSource无实际功能，是为了让调用不会抛空指针
+        Spring容器在AbstractApplicationContext中引入了messageSource属性，并在启动容器的过程中将"messageSource"对应的Bean对象设置给messageSource属性；这就明示着要将国际化对象作为一个容器级别的全局组件对外提供，因此Spring项目中如果设置了国际化对象，必须将beanName设置为"messageSource".
+    1.2 getMessage方法
+        1.2.1   先调用getMessageInternal(code, args, locale)获取国际化信息，不为空则直接返回；否则进入从支1，调用getDefaultMessage(code)逻辑，如果配置项useCodeAsDefaultMessage属性为true(默认为false)则将code本身作为国际化信息返回，否则getDefaultMessage(code)得到null；进入从支2—抛出异常
+        1.2.2   跟进getMessageInternal(code, args, locale)方法
+            (1) 优先从国际化资源中获取，获取失败时再从配置项commonMessages对象中获取—🥶—获取失败再从其父对象中获取；
+            (2) 从国际化资源中获取时，如果需要处理占位符则先处理占位符再处理国际化
+            3) 不需要处理占位符：直接调用resolveCodeWithoutArguments(code, locale)获取；进入resolveCodeWithoutArguments内部
+        1.2.3    跟进getResourceBundle(basename, locale)
+            step2中的(2)和(3)最终都会调用getResourceBundle(basename, locale)方法获取ResourceBundle对象，然后从ResourceBundle对象中获取国际化信息(根据code从ResourceBundle对象的属性中解析，逻辑较为简单)；
+            剩余的调用链依次为：ResourceBundle bundle = doGetBundle(basename, locale); -> ResourceBundle.getBundle(basename, locale, classLoader, control);, 而后者为JDK提供的API。
+
+
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128277653?spm=1001.2014.3001.5501
+https://www.cnblogs.com/johnnyzen/p/17419972.html#_label3_2_1_1
