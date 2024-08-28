@@ -12,12 +12,14 @@ import java.util.concurrent.Future;
  * @Class HelloService
  * @Description
  * @Author rookie
- * @Date 2024/6/28 11:29
+ * @Date 2024/8/28 11:22
  * @Version 1.0
  */
 @Component
 @Slf4j
 public class HelloService {
+
+
     @Async(value = "myTaskExecutor")
     public void print() {
         log.info(Thread.currentThread().getName() + ":" + " test Async call.");

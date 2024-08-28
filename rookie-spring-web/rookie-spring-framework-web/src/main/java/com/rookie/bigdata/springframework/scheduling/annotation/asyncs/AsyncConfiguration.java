@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
  * @Class AsyncConfiguration
  * @Description
  * @Author rookie
- * @Date 2024/6/28 11:28
+ * @Date 2024/8/28 11:21
  * @Version 1.0
  */
 @Configuration
@@ -22,16 +22,16 @@ import java.util.concurrent.Executors;
 @EnableAsync
 public class AsyncConfiguration {
 
-
-    /**
-     * 自定义配置线程池，用于执行异步任务使用
-     *
-     * @return
-     */
-//    @Bean("myTaskExecutor")
+//    /**
+//     * 自定义配置线程池，用于执行异步任务使用
+//     *
+//     * @return
+//     */
+//    @Bean
 //    public Executor myTaskExecutor() {
 //        return Executors.newFixedThreadPool(1);
 //    }
+
 
     /**
      * Spring为@Async提供了默认线程池配置
@@ -45,6 +45,5 @@ public class AsyncConfiguration {
     public TaskExecutor myTaskExecutor() {
         return new SimpleAsyncTaskExecutor();
     }
-
 
 }

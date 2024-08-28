@@ -1,0 +1,58 @@
+
+一   基本用例
+    @Async一般注解在方法上，用于实现方法的异步：方法调用者立即返回，待调用的方法提交给Spring的线程池执行。@Async也可以注解在类上，等价于在类中的所有方法上添加该注解。需要注意@Async只对Spring管理的对象生效。
+
+    1.1 配置线程池
+        被@Async注解的方法会提交给线程池执行，这里可以手动指定线程池或者使用默认的线程池:
+        1.1.1   手动指定线程池
+            通过Async的value属性指定线程池Bean对象(通过beanName指定)，如：
+            @Component
+            public class ComponentA {
+                @Async("myTaskExecutor")
+                public void print() {
+                    System.out.println(Thread.currentThread().getName()+":"+" test Async call.");
+                }
+            }
+
+            @Configuration
+            @EnableAsync
+            public class AsyncConfiguration {
+                @Bean
+                public Executor myTaskExecutor() {
+                    return Executors.newFixedThreadPool(1);
+                }
+            }
+            此时，运行任务会提交给"myTaskExecutor"线程池对象执行。
+        1.1.2   配置默认的线程池
+            @Bean
+            public TaskExecutor myTaskExecutor() {
+                return new SimpleAsyncTaskExecutor();
+            }
+            Spring为@Async提供了默认线程池配置，可通过向IOC中注册TaskExecutor类型的Bean对象实现。
+            也可使用如下配置注册默认线程池：
+            @Bean
+            public Executor taskExecutor() {
+             return Executors.newFixedThreadPool(1);
+            }
+            Spring框架获取TaskExecutor类型的Bean对象失败时，会尝试获取BeanName为"taskExecutor"的线程池对象；但执行时日志中会给出异常信息。
+        1.1.3   使用Spring框架默认的SimpleAsyncTaskExecutor线程池.
+            若业务未配置默认线程池，默认使用Spring生成的SimpleAsyncTaskExecutor对象； 但执行时日志中会给出异常信息。
+    1.2 获取返回值
+        由于@Async注解的方法为异步执行，因此可以通过Future来获取返回值
+
+
+
+
+二   原理
+
+
+
+
+
+
+
+
+
+
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128858090

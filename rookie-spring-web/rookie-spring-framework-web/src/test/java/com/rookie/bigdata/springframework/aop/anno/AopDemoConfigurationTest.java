@@ -4,7 +4,6 @@ import com.rookie.bigdata.springframework.aop.anno.compon.DataTask;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class AopDemoConfigurationTest

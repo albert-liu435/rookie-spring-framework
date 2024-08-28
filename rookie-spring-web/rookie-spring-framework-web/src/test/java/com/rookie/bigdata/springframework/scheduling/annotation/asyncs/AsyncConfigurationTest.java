@@ -7,27 +7,28 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import java.util.concurrent.Future;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class AsyncConfigurationTest
  * @Description
  * @Author rookie
- * @Date 2024/6/28 11:30
+ * @Date 2024/8/28 11:23
  * @Version 1.0
  */
 @Slf4j
 class AsyncConfigurationTest {
 
-
     @Test
     void test01() {
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(AsyncConfiguration.class);
         //用id取出业务逻辑类的bean
-        HelloService componentA = (HelloService) applicationContext.getBean("helloService");
+        HelloService helloService = (HelloService) applicationContext.getBean("helloService");
         log.info("test begin...");
-        componentA.print();
+        helloService.print();
         log.info("test end!");
     }
+
 
     @Test
     void test02() throws Exception {
@@ -47,4 +48,5 @@ class AsyncConfigurationTest {
     private static void doOtherBusiness() {
         log.info("do other business...");
     }
+
 }
