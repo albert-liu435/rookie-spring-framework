@@ -1,0 +1,26 @@
+本篇所使用的测试类如下
+项目:rookie-spring-framework-mvc
+测试类：com.rookie.bigdata.springframework.JettyServerApplication#main()
+
+一   启动流程
+    1   调用org.springframework.web.context.ContextLoaderListener#contextInitialized()方法
+        当Tomcat启动时，通过ServletContextEvent事件进入ContextLoaderListener监听器中
+        通过event.getServletContext()可以获取ServletContext对象，该对象实际为ApplicationContextFacade类，该对象将作为整个项目的上下文对象。本质上是StandardContext对象的代理类(Tomcat创建的Context对象)，代理关系如下所示：
+
+
+
+
+
+
+
+
+
+
+文章来源：
+https://github.com/realpdai/tech-pdai-spring-demos
+https://segmentfault.com/a/1190000044224716
+https://blog.csdn.net/Sheng_Q/article/details/128277800
+
+https://www.cnblogs.com/zhaopengcheng/p/6848346.html
+https://cloud.tencent.com/developer/article/2030611
+https://pdai.tech/md/spring/spring-x-framework-springmvc.html
