@@ -44,12 +44,70 @@
 
 
 二   原理
+    2.1 EnableAsync注解定义
+        @EnableAsync注解核心作用是向容器中注册AsyncAnnotationBeanPostProcessor对象。
+        @EnableAsync注解提过了以下属性用于自定义配置：
+        2.1.1   annotation属性：
+            用于指定生效的注解，默认为@Async和EJB的@Asynchronous注解。当指定注解时，仅指定的注解生效：但是，仅@Async中可以通过value属性指定需要的线程池Bean对象；因为硬编码获取beanName的逻辑：来源必须为@Async注解的value属性：
+        2.1.2   proxyTargetClass属性：
+            可用于配置代理类型：true时表示强制使用CGLIB动态代理，false时表示根据被代理类情况进行确定，默认为false。仅当模式设置为AdviceMode#PROXY时有效。
+        2.1.3   mode属性：
+            指出应该如何应用异步通知, 默认值是AdviceMode.PROXY。
+        2.1.4   order属性：
+            指示应该Bean对象在BPP阶段应用AsyncAnnotationBeanPostProcessor的顺序，默认值是Ordered.LOWEST_PRECEDENCE，以便在所有其他后处理器之后运行，这样它就可以向现有代理添加一个advisor而不是双代理。
+    2.2 EnableAsync注解作用
+        通过@Import注解向IOC中注入了AsyncConfigurationSelector对象, 进入AsyncConfigurationSelector对象
+        由于加载的AsyncConfigurationSelector对象为ImportSelector类型，Spring继续完成ProxyAsyncConfiguration类型的注入。
+        进入ProxyAsyncConfiguration代码逻辑，发现是一个配置类，用于向容器中注入一个AsyncAnnotationBeanPostProcessor对象：
+        总之，@EnableAsync后IOC容器中会增加一个AsyncAnnotationBeanPostProcessor类型的对象；beanName为"org.springframework.context.annotation.internalAsyncAnnotationProcessor".
 
+    2.3 AsyncAnnotationBeanPostProcessor
+        AsyncAnnotationBeanPostProcessor是一个后置处理器且实现了BeanFactoryAware接口，核心逻辑在两处：Aware阶段和BPP-After阶段.
+        2.3.1   Aware阶段：准备好Advisor对象(内部包含一个拦截器)
+            上述方法完成了BeanFactory属性的注入以及this.advisor属性的设置，属性类型为AsyncAnnotationAdvisor，进入AsyncAnnotationAdvisor的构造函数：
+            注意AnnotationAsyncExecutionInterceptor是一个MethodInterceptor接口的实现类：
+            总之，在aware阶段为AsyncAnnotationBeanPostProcessor对象注入this.advisor一个AsyncAnnotationAdvisor类型的对象，该对象包含BeanFactory和advice属性；其中advice属性包含一个MethodInterceptor拦截器。
+        2.3.1   BPP-After阶段：为Bean对象生成代理
+            在AsyncAnnotationBeanPostProcessor的初始化过程完成后，当IOC初始化单例Bean对象时，会在初始化的后置处理器阶段调用AsyncAnnotationBeanPostProcessor的postProcessAfterInitialization方法：
+            如上述代码所示：
+            已完成AOP代理的不需要再次代理，将AsyncAnnotationBeanPostProcessor的this.advisor属性添加到代理对象的List<Advisor>列表中；未经过代理且类中注解了@Async的对象，Spring为其创建一个代理对象，并将this.advisor属性信息保存到代理对象中。【代理过程参考：Spring系列-8 AOP原理】
+        2.3.2  接口调用
+            Spring提供了两种代理方式：JDK动态代理和CGLIB代理，由于底层代理细节对实现原理并无影响，这里以JDK动态代理为例进行介绍。
+            被代理的对象在方法被调用时，进入JdkDynamicAopProxy的invoke拦截方法，注意每个代理对象对应一个JdkDynamicAopProxy对象
+                涉及代码如下所示(保留主线逻辑)：
+                invoke方法的主线逻辑：
+                [1] 从targetSource属性中取出被代理的对象;
+                [2] 从 advised属性中获取拦截器链;
+                [3] 判断拦截器链是否为空，为空则直接通过反射调用该方法；否则进入拦截器对象；
+                [4] 进行结果类型的校验，并返回结果对象。
+    2.4 ReflectiveMethodInvocation介绍：
+        ReflectiveMethodInvocation是对调用链进行的一层封装：
+        interceptorsAndDynamicMethodMatchers为构建ReflectiveMethodInvocation对象时传入的chain参数；即依次调用拦截器的拦截invoke方法，最后执行invokeJoinpoint()方法。注意：调用拦截器时将this作为入参(该ReflectiveMethodInvocation对象)，拦截器中可通过调用该对象的proceed()实现回调。
+    2.5 AnnotationAsyncExecutionInterceptor介绍：
+        当异步方法被调用时，堆栈逻辑进入到AnnotationAsyncExecutionInterceptor的invoke方法：
+        AnnotationAsyncExecutionInterceptor的invoke方法主线逻辑如下：
+        [1] 获取待执行的任务的线程池;
+        [2] 回调ReflectiveMethodInvocation的逻辑(将invocation.proceed())封装为一个任务；
+        [3] 将任务提交给线程池执行。
 
-
-
-
-
+        当提交给线程池的任务被执行时，即invocation.proceed()执行时进入到ReflectiveMethodInvocation的invokeJoinpoint()方法，反射调用目标方法。
+        获取执行@Async方法的线程池：
+        其中，this.executors对象用于缓存方法与线程池的关系，减少查询次数。
+        主线逻辑为：
+        如果@Async注解的value有值，则根据该值从beanFactory中获取对应的线程池Bean对象；否则获取默认的线程池，获取步骤如下：
+        逻辑较为简单：通过父类的getDefaultExecutor方法获取默认的线程池，获取失败则使用SimpleAsyncTaskExecutor线程池对象。
+        父类getDefaultExecutor方法逻辑如下：
+        先尝试根据TaskExecutor类型从IOC中获取Bean对象，获取失败再次根据"taskExecutor"名称获取Executor类型的Bean对象，都获取失败时返回null；当从父类的getDefaultExecutor方法获取线程池结果为空时，会使用 SimpleAsyncTaskExecutor线程池对象。
+        注意：
+        SimpleAsyncTaskExecutor对象每次执行任务都会创建一个新的线程(且没有最大线程数设置)，当并发量较大时可能导致严重的性能问题；建议使用@Async的项目自定义beanName为 "taskExecutor"且类型为TaskExecutor的线程池。
+    2.6 代理类型：
+        Spring提供了两种动态代理类型：JDK动态代理和CGLIB动态代理(可参考：AVASE-14 静态代理与动态代理)，并支持通过配置对其进行指定。
+        AopProxy工厂(DefaultAopProxyFactory)创建AopProxy对象的过程如下：
+        NativeDetector.inNativeImage()和config.isOptimize() 在整个代理和方法调用过程(未涉及配置)取默认值，可直接忽略；且通过Class<?> targetClass = config.getTargetClass();得到的对象为(已被实例化的)Bean对象的字节码类型，不可能为接口类型或空对象，可直接忽略。[框架代码不同于业务代码，需要考虑多种场景的适配]
+        因此，上述代码可以简化为：
+        结果比较清晰：
+        【1】如果目标对象已被JDK动态代理过，则选择JDK动态代理；
+        【2】如果ProxyTarget属性为true 或者没有实现接口，使用CGBLIB代理；否则使用JDK动态代理。
 
 
 
