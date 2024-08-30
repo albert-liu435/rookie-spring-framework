@@ -6,6 +6,67 @@
     1   调用org.springframework.web.context.ContextLoaderListener#contextInitialized()方法
         当Tomcat启动时，通过ServletContextEvent事件进入ContextLoaderListener监听器中
         通过event.getServletContext()可以获取ServletContext对象，该对象实际为ApplicationContextFacade类，该对象将作为整个项目的上下文对象。本质上是StandardContext对象的代理类(Tomcat创建的Context对象)，代理关系如下所示：
+        参考图片:pic/01_mvc.png
+        initWebApplicationContext方法的主线逻辑如下所示：
+        上述流程可以分为三部分：创建Spring容器、配置和刷新Spring容器、保存Spring容器信息至上下文。
+        1.1 创建Spring容器
+            跟进this.createWebApplicationContext(servletContext)方法：
+            逻辑较为简单，根据ServletContext上下文对象获取Spring容器类型，然后调用BeanUtils.instantiateClass方法通过反射构造Spring容器对象。
+            这里可以关注一下Spring容器的类型：
+            先从web.xml配置文件中的配置信息中获取，如果通过contextClass键指定了Spring容器类型则使用配置的类型，否则通过defaultStrategies.getProperty方法从ContextLoader.properties文件中读取，ContextLoader.properties文件内容如下：即Spring容器默认使用XmlWebApplicationContext类型。
+            我们这里直接使用的是AnnotationConfigWebApplicationContext,所以这一步省略了
+        1.2 配置和刷新Spring容器
+            configureAndRefreshWebApplicationContext方法完成了容器的刷新过程：
+                首先将上下文对象保存在Spring容器对象中；然后从web.xml配置信息中取出contextConfigLocation对应的文件来路径并将该路径设置给容器的configLocation属性，即为Spring容器指定了配置文件路径，此时可借助refreh()方法完成容器的刷新过程。
+                在刷新容器之前，框架对环境变量的占位符做了替换处理(将环境变量中的占位符替换为真实的上下文对象)以及提供 customizeContext方法用于功能扩展。
+                在ContextLoaderListener监听器对象中，通过读取web.xml的contextInitializerClasses或者globalInitializerClasses属性信息收集ApplicationContextInitializer<ConfigurableApplicationContext>对象，并依次调用这些对象的initialize方。即，可以通过在web.xml中配置ApplicationContextInitializer实现类，实现容器刷新前的定制化操作(配置多个类时可以使用都好或者分号分割)
+        1.3 保存Spring容器信息至上下文
+            将Spring容器对象以org.springframework.web.context.WebApplicationContext.ROOT为key存放到上下文对象中。此时，上下文对象与Spring容器对象相互持有。
+
+
+    2   EnableWebMvc注解
+        2.1 WebMvcConfigurationSupport
+            EnableWebMvc注解的作用就是将DelegatingWebMvcConfiguration导入到容器中,而DelegatingWebMvcConfiguration又继承WebMvcConfigurationSupport类，在WebMvcConfigurationSupport中会实例化mvc所必要的对象等信息，具体可以查看WebMvcConfigurationSupport类。
+
+
+
+    3   Spring MVC容器启动
+        jetty加载Servlet组件的时候，先实例化Servlet再调用Servlet的init方法。Spring MVC容器启动发生在DispatcherServlet的init方法中，跟随调用逻辑进入初始化方法(该方法定义在DispatcherServlet的父类HttpServletBean中)。然后调用initServletBean()方法完成SpringMVC容器的创建和刷新过程：initServletBean()方法的主体逻辑在initWebApplicationContext()方法中实现，而initFrameworkServlet()作为扩展方法，此时方法体为空。
+        initWebApplicationContext()方法的主体逻辑如下
+        3.1 通过上下文获取Spring容器对象
+            WebApplicationContextUtils.getWebApplicationContext(getServletContext())静态方法通过org.springframework.web.context.WebApplicationContext.ROOT键从ServletContext上下文对象中出Spring容器对象。
+        3.2 刷新 用于进行初始化，最总会调用初始化策略
+            	protected void initStrategies(ApplicationContext context) {
+            		initMultipartResolver(context);
+            		initLocaleResolver(context);
+            		initThemeResolver(context);
+            		initHandlerMappings(context);
+            		initHandlerAdapters(context);
+            		initHandlerExceptionResolvers(context);
+            		initRequestToViewNameTranslator(context);
+            		initViewResolvers(context);
+            		initFlashMapManager(context);
+            	}
+            3.2.1   initMultipartResolver(context)
+                初始化文件上传解析器MultipartResolver,MultipartResolver 用于处理文件上传，当收到请求时 DispatcherServlet 的 checkMultipart() 方法会调用 MultipartResolver 的 isMultipart() 方法判断请求中是否包含文件。如果请求数据中包含文件，则调用 MultipartResolver 的 resolveMultipart() 方法对请求的数据进行解析，然后将文件数据解析成 MultipartFile 并封装在 MultipartHttpServletRequest (继承了 HttpServletRequest) 对象中，最后传递给 Controller。
+            3.2.2   initLocaleResolver(context)
+                LocaleResolver是Spring MVC中用于解析和设置请求语言环境（Locale）的接口。它允许我们根据请求的不同来动态地确定应使用哪种语言环境来渲染视图和格式化数据。通过实现LocaleResolver接口或继承其现有的实现类，我们可以定制自己的语言环境解析策略。
+            3.2.3   initThemeResolver(context)
+                ThemeResolver的主要作用是解析和管理Web应用程序中的主题。主题通常包括一组相关的样式表、图片和其他资源，用于定义应用程序的外观和风格。通过ThemeResolver，开发者可以轻松地切换不同的主题，以满足用户的个性化需求或实现多语言支持。
+            3.2.4   initHandlerMappings(context)
+                HandlerMapping（处理器映射器）用于确定请求处理器对象。请求处理器可以是任何对象，只要它们使用了@Controller注解或注解@RequestMapping。HandlerMapping负责将请求（url）映射到适当的处理器对象（Controller）。
+            3.2.5   initHandlerAdapters(context);
+                HandlerMappingAdapter组件主要作用是统一调用Controller处理器的方法，便于拓展。Controller类型不同，有多重实现方式，调用的方法就不是确定的。通过适配器模式，可以让每一个适配器对应一种controller的类型，来分别调用处理 这样在扩展的时候只需要增加一个适配器来扩展即可。
+            3.2.6   initHandlerExceptionResolvers(context);
+                HandlerExceptionResolver的主要作用是处理在Spring MVC框架的控制器（Controller）中抛出的异常。当控制器中的方法执行时遇到异常，Spring MVC会调用配置的HandlerExceptionResolver来解析该异常，并决定如何处理它。这通常包括记录错误信息、将用户重定向到错误页面、或者返回包含错误信息的响应体。
+            3.2.7   initRequestToViewNameTranslator(context);
+                RequestToViewNameTranslator的主要职责是根据传入的HttpServletRequest对象生成一个视图名称。这通常发生在控制器方法执行完毕后，但视图渲染之前。通过这个接口，我们可以自定义视图名称的生成逻辑，实现更灵活的视图解析
+            3.2.8   initViewResolvers(context);
+            3.2.9   initFlashMapManager(context);
+                FlashMap用于重定向时的参数传递，比如在处理用户订单时，为了避免重复提交，可以处理完post请求后重定向到一个get请求，这个get请求可以用来显示订单详情之类的信息。这样做虽然可以规避用户重新提交订单的问题，但是在这个页面上要显示订单的信息，这些数据从哪里获取呢？因为重定向是没有传递参数这一功能的，如果不想把参数写进URL（其实也不推荐这么做，除了URL有长度限制，把参数都直接暴露也不安全），那么就可以通过FlashMap来传递。只需要在重定向之前将要传递的数据写入请求（可以通过ServletRequestAttributes.getRequest()方法获得）的属性OUTPUT_FLASH_MAP_ATTRIBUTE中，这样在重定向之后的Handler中Spring就会自动将其设置到Model中，在显示订单信息的页面上就可以直接从Model中获得数据。
+
+
+
 
 
 
@@ -24,3 +85,14 @@ https://blog.csdn.net/Sheng_Q/article/details/128277800
 https://www.cnblogs.com/zhaopengcheng/p/6848346.html
 https://cloud.tencent.com/developer/article/2030611
 https://pdai.tech/md/spring/spring-x-framework-springmvc.html
+
+
+MultipartResolver: https://blog.csdn.net/qq_16992475/article/details/126713987
+LocaleResolver: https://blog.csdn.net/qq_32868023/article/details/136639010
+ThemeResolver: https://blog.csdn.net/qq_32868023/article/details/136334661
+HandlerMapping: https://blog.csdn.net/x_xhuashui/article/details/129338847
+https://www.cnblogs.com/RunningSnails/p/17124402.html
+https://blog.csdn.net/yuliantao/article/details/136544633
+https://blog.csdn.net/qq_32868023/article/details/136639019
+https://blog.csdn.net/qq_42192693/article/details/117336182
+https://blog.csdn.net/2401_83703893/article/details/137058303
