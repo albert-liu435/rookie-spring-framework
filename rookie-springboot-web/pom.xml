@@ -10,7 +10,6 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <modules>
-        <module>rookie-springboot-parameter</module>
         <module>rookie-springboot-property</module>
         <module>rookie-springboot-webmvc</module>
 
