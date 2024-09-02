@@ -1,0 +1,21 @@
+1   MultipartResolver   用于处理多文件上传请求。
+2   LocaleResolver  用于从请求中解析出 Locale，是i18n的基础。
+3   ThemeResolver   用来解析样式、图片及它们所形成的显示效果的集合。
+4   HandlerMapping  保存Url和逻辑处理的映射关系，
+5   HandlerAdapter  动态参数适配器，让固定的Servlet处理方法调用Handler来进行处理
+6   HandlerExceptionResolver    用来处理Handler产生的异常情况的组件。
+7   RequestToViewNameTranslator 从请求中获取ViewName
+8   ViewResolvers   主要作用是将String类型的视图名和Locale解析为View类型的视图
+9   FlashMapManager 用于重定向时的参数传递。
+
+
+
+MultipartResolver: https://blog.csdn.net/qq_16992475/article/details/126713987
+LocaleResolver: https://blog.csdn.net/qq_32868023/article/details/136639010
+ThemeResolver: https://blog.csdn.net/qq_32868023/article/details/136334661
+HandlerMapping: https://blog.csdn.net/x_xhuashui/article/details/129338847
+https://www.cnblogs.com/RunningSnails/p/17124402.html
+https://blog.csdn.net/yuliantao/article/details/136544633
+https://blog.csdn.net/qq_32868023/article/details/136639019
+https://blog.csdn.net/qq_42192693/article/details/117336182
+https://blog.csdn.net/2401_83703893/article/details/137058303

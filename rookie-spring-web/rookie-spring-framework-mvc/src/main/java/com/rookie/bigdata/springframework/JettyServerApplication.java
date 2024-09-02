@@ -22,6 +22,9 @@ import org.springframework.web.servlet.DispatcherServlet;
 public class JettyServerApplication {
 
     public static void main(String[] args) throws Exception {
+
+
+
         Server server = new Server(8080);
         ServletContextHandler handler = new ServletContextHandler();
 

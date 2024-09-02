@@ -1,0 +1,121 @@
+
+
+1 工作原理
+    说明：本文重点在于说明参数解析器的工作原理和使用方式，为避免文章过于冗长，会刻意省略对异步请求和文件上传部分的分支逻辑，读者可在理解主线逻辑后自定阅读该部分源码。源码介绍时，会忽略所有的日志打印以及与主线逻辑无关的try-catch-finnally块
+    1.1 解析原理
+        SpringMVC系列-2 HTTP请求调用链 中介绍过：收到http请求后，进入DispatcherServlet的dispatcherServlet方法：
+        在执行HandlerInterceptor的preHandle和postHandle之间，会通过ha.handle(processedRequest, response, mappedHandler.getHandler())反射调用Controller接口，跟踪该调用链进入
+        public void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
+        	//	⚠️1.调用controller接口
+        	Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+
+        	//	⚠️2.处理返回值
+        	setResponseStatus(webRequest);
+        	if (returnValue == null) {
+        		if (isRequestNotModified(webRequest) || getResponseStatus() != null || mavContainer.isRequestHandled()) {
+        			disableContentCachingIfNecessary(webRequest);
+        			mavContainer.setRequestHandled(true);
+        			return;
+        		}
+        	} else if (StringUtils.hasText(getResponseStatusReason())) {
+        		mavContainer.setRequestHandled(true);
+        		return;
+        	}
+
+        	mavContainer.setRequestHandled(false);
+        	Assert.state(this.returnValueHandlers != null, "No return value handlers");
+        	try {
+        		this.returnValueHandlers.handleReturnValue(returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
+        	} catch (Exception ex) {
+        		if (logger.isTraceEnabled()) {
+        			logger.trace(formatErrorForReturnValue(returnValue), ex);
+        		}
+        		throw ex;
+        	}
+        }
+        invokeAndHandle方法从逻辑上可以分为两个部分：（1）调用controller接口并获取返回值；（2）处理返回值。
+        本文关注第一部分：Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
+        其中：webRequest包装了HTTP请求的request和response对象，mavContainer是MVC对象，providedArgs传入的是null.
+        跟进invokeForRequest方法
+            public Object invokeForRequest(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
+            	Object[] args = getMethodArgumentValues(request, mavContainer, providedArgs);
+            	return doInvoke(args);
+            }
+        包括两个步骤：（1）调用getMethodArgumentValues获取参数；（2）将步骤（1）获取的参数传递给doInvoke，通过反射调用Controller接口并返回结果。
+        跟进getMethodArgumentValues方法：
+            protected Object[] getMethodArgumentValues(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer,	Object... providedArgs) throws Exception {
+            	MethodParameter[] parameters = getMethodParameters();
+            	if (ObjectUtils.isEmpty(parameters)) {
+            		return new Object[0];
+            	}
+
+            	Object[] args = new Object[parameters.length];
+            	for (int i = 0; i < parameters.length; i++) {
+            		MethodParameter parameter = parameters[i];
+            		parameter.initParameterNameDiscovery(this.parameterNameDiscoverer);
+            		args[i] = findProvidedArgument(parameter, providedArgs);
+            		if (args[i] != null) {
+            			continue;
+            		}
+            		if (!this.resolvers.supportsParameter(parameter)) {
+            			throw new IllegalStateException(formatArgumentError(parameter, "No suitable resolver"));
+            		}
+            		try {
+            			args[i] = this.resolvers.resolveArgument(parameter, mavContainer, request, this.dataBinderFactory);
+            		} catch (Exception ex) {
+            			throw ex;
+            		}
+            	}
+            	return args;
+            }
+        由于入参providedArgs为null, 因此上述逻辑可以简化为：
+            protected Object[] getMethodArgumentValues(NativeWebRequest request, @Nullable ModelAndViewContainer mavContainer,	Object... providedArgs) throws Exception {
+            	MethodParameter[] parameters = getMethodParameters();
+            	if (ObjectUtils.isEmpty(parameters)) {
+            		return new Object[0];
+            	}
+
+            	Object[] args = new Object[parameters.length];
+            	for (int i = 0; i < parameters.length; i++) {
+            		MethodParameter parameter = parameters[i];
+            		parameter.initParameterNameDiscovery(this.parameterNameDiscoverer);
+            		if (!this.resolvers.supportsParameter(parameter)) {
+            			throw new IllegalStateException(formatArgumentError(parameter, "No suitable resolver"));
+            		}
+            		try {
+            			args[i] = this.resolvers.resolveArgument(parameter, mavContainer, request, this.dataBinderFactory);
+            		} catch (Exception ex) {
+            			throw ex;
+            		}
+            	}
+            	return args;
+            }
+        上述解析参数的逻辑可以分为两步：（1）获取目标接口的参数数组，并判断是否为空(参数为空即不需要处理参数)；（2）遍历参数数组，根据参数解析器对每个参数对象依此进行处理，如果没有匹配的参数处理器，则抛出IllegalStateException异常。
+
+        这里的参数解析器this.resolvers类型是HandlerMethodArgumentResolverComposite，是一个组合模型，内部维持了一个HandlerMethodArgumentResolver数组：
+        private final List<HandlerMethodArgumentResolver> argumentResolvers
+        参数解析最终都会派发给argumentResolvers的各个元素，派发原则是选择第一个满足匹配规则的参数解析器。
+            在后续SpringMVC源码介绍过程中，会发现框架大量使用了组合设计模式；大部分采取匹配+处理的组合手段完成。
+            因此HandlerMethodArgumentResolver接口需要有两个接口：
+                public interface HandlerMethodArgumentResolver {
+                	boolean supportsParameter(MethodParameter parameter);
+
+                	Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
+                			NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception;
+                }
+            supportsParameter方法用于判断该HandlerMethodArgumentResolver是否与参数匹配，resolveArgument方法用于解析参数并返回解析结果。
+
+    1.2 初始化过程
+
+
+
+
+
+
+
+
+
+
+
+文章来源:
+https://blog.csdn.net/Sheng_Q/article/details/133231417

@@ -1,0 +1,55 @@
+测试项目:
+项目名称:rookie-springboot-webmvc
+启动类:com.rookie.bigdata.springframework.WebMvcBootApplication
+
+
+MultipartResolver
+    1   MultipartResolver接口
+        1.1 MultipartResolver的功能
+            org.springframework.web.multipart.MultipartResolver是Spring-Web根据RFC1867规范实现的多文件上传的策略接口。同时，MultipartResolver是Spring对文件上传处理流程在接口层次的抽象。也就是说，当涉及到文件上传时，Spring都会使用MultipartResolver接口进行处理，而不涉及具体实现类。
+            MultipartResolver接口源码如下：
+                public interface MultipartResolver {
+                	/**
+                	* 判断当前HttpServletRequest请求是否是文件请求
+                	*/
+                    boolean isMultipart(HttpServletRequest request);
+                	/**
+                	*  将当前HttpServletRequest请求的数据（文件和普通参数）封装成MultipartHttpServletRequest对象
+                	*/
+                    MultipartHttpServletRequest resolveMultipart(HttpServletRequest request) throws MultipartException;
+                	/**
+                	*  清除文件上传产生的临时资源（如服务器本地临时文件）
+                	*/
+                    void cleanupMultipart(MultipartHttpServletRequest request);
+                }
+        1.2 在DispatcherServlet中的使用
+            DispatcherServlet中持有MultipartResolver成员变量：
+
+                public class DispatcherServlet extends FrameworkServlet {
+                   /** Well-known name for the MultipartResolver object in the bean factory for this namespace. */
+                   public static final String MULTIPART_RESOLVER_BEAN_NAME = "multipartResolver";
+                   /** MultipartResolver used by this servlet. */
+                	@Nullable
+                	private MultipartResolver multipartResolver;
+                }
+                DispatcherServlet在初始化时，会从Spring容器中获取名为multipartResolver的对象（该对象是MultipartResolver实现类），作为文件上传解析器：
+                需要注意的是，如果Spring容器中不存在名为multipartResolver的对象，DispatcherServlet并不会额外指定默认的文件解析器。此时，DispatcherServlet不会对文件上传请求进行处理。也就是说，尽管当前请求是文件请求，也不会被处理成MultipartHttpServletRequest，如果我们在控制层进行强制类型转换，会抛异常。
+                总的来说，DispatcherServlet处理文件请求会经过以下步骤：
+
+                    1   判断当前HttpServletRequest请求是否是文件请求
+                        1.1 是：将当前HttpServletRequest请求的数据（文件和普通参数）封装成MultipartHttpServletRequest对象
+                        1.2 不是：不处理
+                    2   DispatcherServlet对原始HttpServletRequest或MultipartHttpServletRequest对象进行业务处理
+                    3   业务处理完成，清除文件上传产生的临时资源
+
+
+文章来源：
+https://www.cnblogs.com/tengyunhao/p/7670293.html
+https://blog.csdn.net/qq_27009225/article/details/86727294
+https://www.cnblogs.com/Xianhuii/p/16933750.html
+https://blog.csdn.net/qq_16992475/article/details/126713987
+
+
+测试上传文件:
+https://cloud.tencent.com/developer/article/1594124
+https://blog.csdn.net/xqnode/article/details/124972531
