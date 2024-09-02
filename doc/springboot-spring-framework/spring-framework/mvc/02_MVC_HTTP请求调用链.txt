@@ -1,0 +1,23 @@
+一   调用链
+    1.1 Tomcat从逻辑上可以分为连接器(coyote)和Servlet容器(catalina)两个部分：coyote负责接收客户端的请求，并按照协议对请求进行解析，封装成Java对象后发送给catalina以及将catalina返回的消息推送给客户端；catalina提供了Servlet容器实现，负责处理具体的请求并进行响应。
+        其中，coyote封装了底层的网络通讯(Socket)，为catalina提供了统一的接口(Request/Response对象)而与Servlet容器解耦；catalina内部通过适配器将(Request/Response对象)转换为(HttpRequest/HttpResponse对象)，然后将消息发送给Servlet对象，流程图如下所示:./pic/02_http.png
+        总之，当Http请求到达Tomcat连接池后，会将请求消息封装成(HttpRequest/HttpResponse对象), 通过调用Servlet标准接口实现消息的传递。
+        SpringMVC框架对应的Servlet对象为DispatcherServlet，即调用栈会进入DispatcherServlet的void service(ServletRequest req, ServletResponse res)方法。
+        因此，有必要了解一下DispatcherServlet类的继承关系以及对Servlet方法实现情况，如下图所示：./pic/03_dispatch.png
+    1.2 HttpServlet
+        ./pic/04_dispatch.png
+        DispatcherServlet关于Servlet:void service(ServletRequest req, ServletResponse res)接口的实现逻辑在HttpServlet类中
+        逻辑较为简单，直接将ServletRequest/ServletResponse对象转为HttpServletRequest/HttpServletResponse，并调用service(HttpServletRequest req, HttpServletResponse resp)接口。后者中根据HTTP方法类型派发给了doGet/doPost/doPut等接口；而doGet/doPost/doPut等接口的实现逻辑在FrameworkServlet中归一到void processRequest(HttpServletRequest request, HttpServletResponse response)接口中：
+        总之，所有来自Servlet的请求都会进入processRequest方法中进行处理
+    1.3 FrameworkServlet
+        ./pic/05_dispatch.png
+        processRequest方法的主线逻辑如下：
+            逻辑上可以分为三块：调用doService(request, response)接口处理并响应、调用前的准备工作、调用后的清理工作。
+        1.3.1   准备工作
+            根据request对象获取Locale对象并将其通过ThreadLocal对象中，将request和response对象封装在RequestAttributes对象中，保存在ThreadLocal对象中；借助ThreadLocal的能力，对外提供了静态方法，使得程序在任意时刻都取得Locale对象、request和response对象。
+
+
+
+
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/131302306
