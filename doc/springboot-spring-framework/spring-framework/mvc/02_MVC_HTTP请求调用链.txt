@@ -1,3 +1,8 @@
+测试项目：
+rookie-spring-framework-mvc
+
+com.rookie.bigdata.springframework.JettyServerApplication
+
 一   调用链
     1.1 Tomcat从逻辑上可以分为连接器(coyote)和Servlet容器(catalina)两个部分：coyote负责接收客户端的请求，并按照协议对请求进行解析，封装成Java对象后发送给catalina以及将catalina返回的消息推送给客户端；catalina提供了Servlet容器实现，负责处理具体的请求并进行响应。
         其中，coyote封装了底层的网络通讯(Socket)，为catalina提供了统一的接口(Request/Response对象)而与Servlet容器解耦；catalina内部通过适配器将(Request/Response对象)转换为(HttpRequest/HttpResponse对象)，然后将消息发送给Servlet对象，流程图如下所示:./pic/02_http.png
@@ -14,10 +19,63 @@
         processRequest方法的主线逻辑如下：
             逻辑上可以分为三块：调用doService(request, response)接口处理并响应、调用前的准备工作、调用后的清理工作。
         1.3.1   准备工作
+            LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
+            LocaleContext localeContext = buildLocaleContext(request);
+
+            RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes requestAttributes = buildRequestAttributes(request, response, previousAttributes);
+
+            // WebAsyncManager提供了HTTP请求异步处理能力，不是本文的重点
+            WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
+            asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
+
             根据request对象获取Locale对象并将其通过ThreadLocal对象中，将request和response对象封装在RequestAttributes对象中，保存在ThreadLocal对象中；借助ThreadLocal的能力，对外提供了静态方法，使得程序在任意时刻都取得Locale对象、request和response对象。
+        1.3.2   清理工作
+            清理工作对应从内存中将该线程相关的Locale对象和request和response对象从内存中清除，以防止内存泄露。
+            resetContextHolders(request, previousLocaleContext, previousAttributes);
+
+            private void resetContextHolders(HttpServletRequest request, LocaleContext prevLocaleContext, RequestAttributes previousAttributes) {
+            	LocaleContextHolder.setLocaleContext(prevLocaleContext, this.threadContextInheritable);
+            	RequestContextHolder.setRequestAttributes(previousAttributes, this.threadContextInheritable);
+            }
+    1.4 DispatchServlet
+        如图：./pic/05_dispatch1.png
+        doService逻辑比较简单，包括：调用doDispatch方法前对request的属性设置，以及在调用之后清理工作。doDispatch方法是核心，其他逻辑是在为调用该方法做的准备或收尾工作。本文希望将HTTP调用链的主线逻辑表达清楚，因此会省去异步请求(WebAsyncManager相关)、文件上传(MultipartResolver相关)、异常捕获等逻辑，上述逻辑可以表示为：
+        如图：./pic/05_dispatch2.png
+        拦截器的preHandle方法按照拦截器在列表中的顺序正向执行，postHandle和afterCompletion反向执行。
+        上图可以分为以下几个步骤：
+        （1）根据request对象获取执行链HandlerExecutionChain；执行链由Interceptor(拦截器)和Handler(对controller的包装)组成;
+        （2）根据Handler获取HandlerAdapter；
+        （3）依次调用拦截器的preHandle方法；
+        （4）借助HandlerAdapter 通过反射调用目标方法(controller对应的方法)；
+        （5）依次调用拦截器的postHandle方法；
+        （6）对结果或者异常进行后置处理；
+        （7）依次调用拦截器的afterCompletion方法；
+
+        上述步骤为正常执行流程，异常场景包括
+        1.4.1   异常场景1:
+            当根据equest对象获取执行链HandlerExecutionChain失败时(没有匹配项)，则直接想客户端返回404。
+        1.4.2   异常场景2:
+            调用某个拦截器的preHandle方法返回false时，则反向执行已执行过拦截器的afterCompletion方法，并跳出doDispatch方法。
+            如图：./pic/05_dispatch3.png
+            当有拦截器的preHandle方法返回false时，调用triggerAfterCompletion(request, response, null)方法：倒序执行已执行过preHandle的拦截器。
+        1.4.3   异常场景3:
+            preHandle或者反射调用目标方法(Controller接口)过程中有异常抛出时，经过异常捕获将异常包装成Exception对象，并通过processDispatchResult方法处理结果：
+            如果有异常抛出，则exception不为空，通过processHandlerException方法处理异常场景。
+            如论是否有异常抛出，最后都通过mappedHandler.triggerAfterCompletion会触发拦截的afterCompletion方法。
+            同样需要注意：拦截器在执行preHandle过程中抛出的异常，则会反向执行已执行过preHandle方法拦截器的afterCompletion方法。
+            如果在拦截器的postHandle或者反射调用目标方法过程中抛出的异常，则会执行所有拦截器的afterCompletion方法，流程如下所示：
+            如图：./pic/05_dispatch4.png
+
+
+
+
 
 
 
 
 文章来源：
 https://blog.csdn.net/Sheng_Q/article/details/131302306
+https://cloud.tencent.com/developer/article/2030611
+https://www.cnblogs.com/zhaopengcheng/p/6848346.html
+https://pdai.tech/md/spring/spring-x-framework-springmvc.html

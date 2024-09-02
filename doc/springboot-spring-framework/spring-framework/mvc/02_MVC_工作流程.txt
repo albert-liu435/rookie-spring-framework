@@ -1,0 +1,67 @@
+测试项目：
+rookie-spring-framework-mvc
+
+com.rookie.bigdata.springframework.JettyServerApplication
+
+
+参考图片：
+spring-springframework-mvc-1.png,spring-springframework-mvc-2.png,spring-springframework-mvc-3.png,spring-springframework-mvc-4.png,spring-springframework-mvc-5.png
+
+执行流程：
+    1   用户发送http请求至前端控制器DispatcherServlet
+        用户发送http请求至前端控制器DispatcherServlet，中途会有过滤器Filter进行数据过滤。DispatcherServlet执行doService方法经过数据灌入后调用doDispatch方法，得到请求资源标识符（URI）.
+        用户发起http请求后，Filter过滤器会拦截客户的HttpServletRequest，主要用于对HttpServletRequest进行预处理，根据需要检查HttpServletRequest权限 ，也可以修改HttpServletRequest 头和数据或记录日志等操作。
+    2   DispatcherServlet收到请求后调用HandlerMapping处理器映射器
+        DispatcherServlet收到请求后调用HandlerMapping处理器映射器。HandlerMapping找到具体的Handler处理器(可以根据xml配置、注解进行查找)。将生成的Handler（处理器对象）及HandlerInterceptor（处理器拦截器）一并返回给DispatcherServlet。
+        DispatcherServlet会去遍历所有的HandlerMapping，寻找一个可以处理该HTTP请求的Handler。匹配成功的HandlerMapping会向DispatcherServlet返回一个HandlerExecutionChain类型的处理器执行链，里面封装了一个Handler和一堆HandlerInterceptor处理器拦截器。之后会调用getHandlerAdapter方法，遍历所有已注入的HandlerAdapter（处理器适配器），依次使用HandlerAdapter中的supports方法寻找一个适合这个Handler的适配器子类。
+        初始化HandlerMapping流程图: pic/spring-springframework-mvc-6.png
+
+         HandlerMapping执行过程：
+         DispatcherServlet在选用HandlerMapping的过程中，将根据我们指定的一系列HandlerMapping中选择优先级最高的。
+         可以通过AbstractHandlerMapping的setOrder()方法提高优先级。
+         使用SimpleUrlHandlerMapping对HandlerMapping进行初始化操作。
+         1）从配置文件（DispatcherServlet.properties） 中确定了需要初始化的HandlerMapping接口，并通过继承的ApplicationObjectSupport抽象类中的initApplicationContext()方法实现初始化的一些工作。
+         2）通过SimpleUrlHandlerMapping中的initApplicationContext()方法， 先初始化SpringMVC容器，然后再对Handler进行注册。
+         3）通过AbstractHandlerMapping中的detectMappingInterceptors()方法探测ApplicationContext中已经解析过的MappedInterceptor，通过initInterceptors()方法来初始化拦截器。
+         4）调用initInterceptors()方法将SimpleUrlHandlerMapping中定义的interceptors包装成HandlerInterceptor对象保存在名为adaptedInterceptors的List中。
+         5）调用SimpleUrlHandlerMapping中的registerHandler(url,handler)方法，对urlMap中的key值进行处理urlMap就是在配置文件中SimpleUrlHandlerMapping通过mappings属性注入的的内容。key是url的某个字段，value是bean的id。value值通过getBean()方法得到bean对象，同时将url的某个字段作为key值。
+         目的：
+         这样就达到url的某个字段对应到具体的controller了的目的，当遇到有请求访问服务器的时候，就可以根据url找到具体的controller控制层去执行这个请求了。
+         6）调用DispatchServlet中的getHandler方法，事实上调用对应的AbstractHandlerMapping实现类的getHandler方法，通过urlMap拿到对应的Handler。
+         7）将获取到的Handler和一堆HandlerInterceptor封装到HandlerExecutionChain对象中，并返回给DispatcherServlet。
+         8）通过获取到的handler，调用getHandlerAdapter方法，这个方法会遍历所有注入的HandlerAdapter，依次使用supports方法寻找适合这个handler的适配器子类。
+    3   将封装好的HandlerExecutionChain类型的Handler处理器执行链和适合这个Handler的HandlerAdapter（里面定义了执行Handler的特定规则）返回给DispatcherServlet。
+    4   通过获取到适合的HandlerAdapter执行HandlerAdapter中的 handle方法（这个handle只是处理器适配器中的一个方法而已），方法调用Handler里对应的bean，执行该bean对应的Controller类。
+        DispatcherServlet将控制权交给处HandlerAdapter，处理器适配器将HTTP请求HttpServletRequest和HTTP响应HttpServletResponse传递给Handler（或者说控制器Controller），Controller调用Service业务层对数据逻辑进行处理（交给Mybatis框架），控制器完成请求处理后，返回带有数据模型和逻辑视图的ModelAndView对象传给HandlerAdapter，最终由HandlerAdapte返回给DispatcherServlet。
+    5   最终将执行结果封装成ModelAndView对象返回给DispatcherServlet。
+    6   DispatcherServlet将ModelAndView传给ViewReslover视图解析器，并根据View进行渲染视图（即将模型数据填充至视图中）
+        SpringMVC中处理视图最终要的两个接口就是ViewResolver和View ViewResolver的作用是将逻辑视图解析成物理视图
+         View的主要作用是调用其render()方法将物理视图进行渲染。
+         根据返回的ModelAndView，通过配置中定义的ViewResolver解析（必须是已经注册到Spring容器中的）结合Model和View，来渲染视图
+    7   将处理过后的ModelAndView视图交给DispatcherServlet，并由DispatcherServlet响应给客户端（展示画面）。
+         可以通过Filter对HttpServletResponse 进行后处理。
+
+三，SpringMVC核心组件
+前端控制器DispatcherServlet
+接收请求，响应结果，相当于转发器，中央处理器。有了dispatcherServlet减少了其它组件之间的耦合度。用户请求到达前端控制器，它就相当于mvc模式中的c，dispatcherServlet是整个流程控制的中心，由它调用其它组件处理用户的请求，dispatcherServlet的存在降低了组件之间的耦合性。
+
+处理器映射器HandlerMapping
+根据请求的url查找Handler，HandlerMapping负责根据用户请求找到Handler即处理器，springmvc提供了不同的映射器实现不同的映射方式，例如：配置文件方式，实现接口方式，注解方式等。
+
+处理器适配器HandlerAdapter
+按照特定规则（HandlerAdapter要求的规则）去执行Handler通过HandlerAdapter对处理器进行执行，这是适配器模式的应用，编写Handler时按照HandlerAdapter的要求去做，这样适配器才可以去正确执行Handler通过扩展适配器可以对更多类型的处理器进行执行。
+
+处理器Handler
+Handler 是继DispatcherServlet前端控制器的后端控制器，在DispatcherServlet的控制下Handler对具体的用户请求进行处理。由于Handler涉及到具体的用户业务请求，所以一般情况需要工程师根据业务需求开发Handler。
+
+视图解析器ViewResolver
+进行视图解析，根据逻辑视图名解析成真正的视图（view）
+ ViewResolver负责将处理结果生成View视图，ViewResolver首先根据逻辑视图名解析成物理视图名即具体的页面地址，再生成View视图对象，最后对View进行渲染将处理结果通过页面展示给用户。 springmvc框架提供了很多的View视图类型，包括：jstl View、freemarker View、pdf View等。
+
+
+
+
+
+文章来源：
+https://blog.csdn.net/weixin_53601359/article/details/114378460?spm=1001.2014.3001.5501
+https://cloud.tencent.com/developer/article/2030611
