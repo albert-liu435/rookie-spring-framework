@@ -25,6 +25,12 @@ public class HelloRest {
         return "hello, " + request.getParameter("name");
     }
 
+    @GetMapping(path = {"abc"})
+    public String sayAbc(HttpServletRequest request) {
+        printServer.print();
+        return "hello, " + request.getParameter("name");
+    }
+
 
     @GetMapping({"/", ""})
     public String index() {
