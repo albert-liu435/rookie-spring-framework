@@ -1,0 +1,31 @@
+
+
+HandlerMapping
+
+1   什么是HandlerMapping
+    在Spring MVC中，HandlerMapping（处理器映射器）用于确定请求处理器对象。请求处理器可以是任何对象，只要它们使用了@Controller注解或注解@RequestMapping。HandlerMapping负责将请求（url）映射到适当的处理器对象（Controller）。
+    注：Handler即绑定了注解@RequestMapping或@Controller的类
+    HandlerMapping接口定义了一个方法：
+        public interface HandlerMapping {
+            HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception;
+        }
+        getHandler方法用于查找处理器对象并返回处理程序的执行链，HandlerExecutionChain包含了处理器对象和一系列拦截器，这些拦截器可以在处理程序执行之前和之后执行一些操作。
+        HandlerMapping接口继承结构体系
+        参考图片:./pic/HandlerMapping.png
+2   HandlerMapping
+    2.1 HandlerMapping初始化
+        Http请求由servlet容器分发到DispatcherServlet，在其中会进行九大核心组件的初始化
+
+
+
+
+
+
+
+
+
+文章来源：
+https://www.jianshu.com/p/f04816ee2495
+https://www.cnblogs.com/minikobe/p/11233908.html
+https://blog.csdn.net/x_xhuashui/article/details/129338847
+https://www.cnblogs.com/mcjmcl/p/12923172.html
