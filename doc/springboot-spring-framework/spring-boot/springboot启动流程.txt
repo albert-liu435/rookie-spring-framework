@@ -1,5 +1,30 @@
 Springboot启动流程
 
+参考项目：rookie-springboot-lifecycle
+
+参考图片：./pic/01_boot_lifecycle.webp
+
+
+
+
+1   运行SpringApplication.run()方法
+    可以肯定的是，所有的标准的springboot的应用程序都是从run方法开始的。进入run方法后，会 new 一个SpringApplication 对象，创建这个对象的构造函数做了一些准备工作，编号第2~5步就是构造函数里面所做的事情
+
+2   确定应用程序类型
+    在SpringApplication的构造方法内，首先会通过 WebApplicationType.deduceFromClasspath()； 方法判断当前应用程序的容器，默认使用的是Servlet 容器，除了servlet之外，还有NONE 和 REACTIVE （响应式编程）；
+
+
+
+文章来源：
+https://blog.csdn.net/yztezhl/article/details/134508289
+
+https://juejin.cn/column/7323793129709387816
+
+
+
+
+
+
 1   org.springframework.boot.SpringApplication#run()
 2       --->org.springframework.boot.SpringApplication#SpringApplication()
                 --->org.springframework.boot.WebApplicationType#deduceFromClasspath()
