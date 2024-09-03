@@ -14,10 +14,57 @@ Springboot启动流程
     在SpringApplication的构造方法内，首先会通过 WebApplicationType.deduceFromClasspath()； 方法判断当前应用程序的容器，默认使用的是Servlet 容器，除了servlet之外，还有NONE 和 REACTIVE （响应式编程）；
 3   加载所有的初始化器
     这里加载的初始化器是springboot自带初始化器，从从 META-INF/spring.factories 配置文件中加载的，那么这个文件在哪呢？自带有2个，分别在源码的jar包的 spring-boot-autoconfigure 项目 和 spring-boot 项目里面各有一个
+     自定义一个BootstrapRegistryInitializer,即CustomerBootstrapRegistryInitializer
+     加载ApplicationContextInitializer，自定义一个ApplicationContextInitializer
+4   加载所有的监听器
+    加载监听器也是从 META-INF/spring.factories 配置文件中加载的，与初始化不同的是，监听器加载的是实现了 ApplicationListener 接口的类
+    同上面的BootstrapRegistryInitializer和ApplicationContextInitializer的用法类似
+5   设置程序运行的主类
+    deduceMainApplicationClass(); 这个方法仅仅是找到main方法所在的类，为后面的扫包作准备，deduce是推断的意思，所以准确地说，这个方法作用是推断出主方法所在的类；
+6   开启计时器
+    程序运行到这里，就已经进入了run方法的主体了，第一步调用的run方法是静态方法，那个时候还没实例化SpringApplication对象，现在调用的run方法是非静态的，是需要实例化后才可以调用的，进来后首先会开启计时器，这个计时器有什么作用呢？顾名思义就使用来计时的嘛，计算springboot启动花了多长时间
+    创建DefaultBootstrapContext并对BootstrapRegistryInitializer进行实例化
+7   将java.awt.headless设置为true
+    这里将java.awt.headless设置为true，表示运行在服务器端，在没有显示器器和鼠标键盘的模式下照样可以工作，模拟输入输出设备功能。
+    做了这样的操作后,SpringBoot想干什么呢?其实是想设置该应用程序,即使没有检测到显示器,也允许其启动.对于服务器来说,是不需要显示器的,所以要这样设置.
+    通过方法可以看到，setProperty()方法里面又有个getProperty()；这不多此一举吗？其实getProperty()方法里面有2个参数， 第一个key值，第二个是默认值，意思是通过key值查找属性值，如果属性值为空，则返回默认值 true；保证了一定有值的情况；
+8   获取并启用监听器
+    这一步 通过监听器来实现初始化的的基本操作，这一步做了2件事情
+        8.1 创建所有 Spring 运行监听器并发布应用启动事件，这里的监听器为SpringApplicationRunListener的实现类，并通过SpringApplicationRunListeners对监听器进行封装
+        8.2 启用监听器，调用SpringApplicationRunListeners的starting()方法
+9   设置应用程序参数
+    将执行run方法时传入的参数封装成一个对象DefaultApplicationArguments
+10  准备环境变量
+    准备环境变量，包含系统属性和用户配置的属性，执行的代码块在 prepareEnvironment 方法内。打了断点之后可以看到，它将maven和系统的环境变量都加载进来了
+12  打印banner信息
+    显而易见，这个流程就是用来打印控制台那个很大的spring的banner的
+13  创建应用上下文
+    实例化应用程序的上下文， 调用 createApplicationContext() 方法，这里就是用反射创建对象
+15  准备上下文环境
+    这里准备的上下文环境是为了下一步刷新做准备的，里面还做了一些额外的事情
+    如图：./pic/02_上下文.png
+    15.1    实例化单例的beanName生成器
+        在 postProcessApplicationContext(context); 方法里面。使用单例模式创建 了BeanNameGenerator 对象，其实就是beanName生成器，用来生成bean对象的名称
+    15.2    执行初始化方法
+        初始化方法有哪些呢？还记得第3步里面加载的初始化器嘛？其实是执行第3步加载出来的所有初始化器，实现了ApplicationContextInitializer 接口的类
+    15.3    将启动参数注册到容器中
+        这里将启动参数以单例的模式注册到容器中，是为了以后方便拿来使用，参数的beanName 为 ：springApplicationArguments
+16  刷新上下文
+    刷新上下文已经是spring的范畴了，自动装配和启动 tomcat就是在这个方法里面完成的，还有其他的spring自带的机制
+    参考图片：./pic/03_refresh.png
+17  刷新上下文后置处理
+    afterRefresh 方法是启动后的一些处理，留给用户扩展使用，目前这个方法里面是空的
+18  结束计时器
+    到这一步，springboot其实就已经完成了，计时器会打印启动springboot的时长
+19   发布上下文准备就绪事件
+    告诉应用程序，我已经准备好了，可以开始工作了
+20  执行自定义的run方法
+    这是一个扩展功能，callRunners(context, applicationArguments) 可以在启动完成后执行自定义的run方法；有2中方式可以实现：
+    实现 ApplicationRunner 接口
+    实现 CommandLineRunner 接口
 
 
 文章来源：
-https://blog.csdn.net/yztezhl/article/details/134508289
 https://www.cnblogs.com/huigui-mint/p/17517759.html
 https://juejin.cn/column/7323793129709387816
 https://blog.51cto.com/u_16099185/11168788

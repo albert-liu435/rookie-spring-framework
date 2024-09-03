@@ -3,5 +3,13 @@ org.springframework.boot.BootstrapRegistryInitializer=\
 com.rookie.bigdata.springframework.boot.CustomerBootstrapRegistryInitializer
 
 # ConfigData Loaders
-org.springframework.boot.context.config.ConfigDataLoader=\
-com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoader
+#org.springframework.boot.context.config.ConfigDataLoader=\
+#com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoader
+
+# Run Listeners
+org.springframework.boot.SpringApplicationRunListener=\
+com.rookie.bigdata.springframework.boot.context.event.CustomerSpringApplicationRunListener
+
+# Application Context Initializers
+org.springframework.context.ApplicationContextInitializer=\
+com.rookie.bigdata.springframework.context.CustomerApplicationContextInitializer
