@@ -1,0 +1,15 @@
+HandlerAdapter
+    适配模式
+
+
+
+
+
+
+文章来源:
+https://blog.csdn.net/f641385712/article/details/89844141
+https://blog.csdn.net/qq_32868023/article/details/136334560
+https://blog.csdn.net/zxd1435513775/article/details/103000992
+https://blog.csdn.net/lxn2zh/article/details/139212525
+https://blog.csdn.net/qq_38410730/article/details/79763628
+https://www.cnblogs.com/lifullmoon/p/14137467.html

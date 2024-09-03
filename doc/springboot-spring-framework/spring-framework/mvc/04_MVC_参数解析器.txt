@@ -1,4 +1,8 @@
+测试项目：
+rookie-springboot-webmvc
+com.rookie.bigdata.WebMvcBootApplication
 
+com.rookie.bigdata.controller.StudentController
 
 1 工作原理
     说明：本文重点在于说明参数解析器的工作原理和使用方式，为避免文章过于冗长，会刻意省略对异步请求和文件上传部分的分支逻辑，读者可在理解主线逻辑后自定阅读该部分源码。源码介绍时，会忽略所有的日志打印以及与主线逻辑无关的try-catch-finnally块
@@ -106,7 +110,36 @@
             supportsParameter方法用于判断该HandlerMethodArgumentResolver是否与参数匹配，resolveArgument方法用于解析参数并返回解析结果。
 
     1.2 初始化过程
+        1.2.1   ServletInvocableHandlerMethods的resolvers属性
+            解析过程的核心在于参数解析器，即ServletInvocableHandlerMethod对象中的HandlerMethodArgumentResolverComposite resolvers属性，而每次HTTP调用都会生成一个ServletInvocableHandlerMethod对象，因此关注该对象的resolvers属性如何被初始化即可：
+            如上所示：ServletInvocableHandlerMethod对象的resolvers属性来自RequestMappingHandlerAdapter对象的this.argumentResolvers属性。
+            RequestMappingHandlerAdapter的argumentResolvers属性
+                继续跟踪RequestMappingHandlerAdapter的this.argumentResolvers属性初始化过程，需要注意的是RequestMappingHandlerAdapter是全局Bean对象，因此可以从头梳理一下该对象关于argumentResolvers属性的初始化过程。
+                1.2.1.1 实例化阶段
+                    @Bean
+                    public RequestMappingHandlerAdapter requestMappingHandlerAdapter(
+                    		@Qualifier("mvcContentNegotiationManager") ContentNegotiationManager contentNegotiationManager,
+                    		@Qualifier("mvcConversionService") FormattingConversionService conversionService,
+                    		@Qualifier("mvcValidator") Validator validator) {
 
+                    	RequestMappingHandlerAdapter adapter = createRequestMappingHandlerAdapter();
+                    	adapter.setCustomArgumentResolvers(getArgumentResolvers());
+
+                    	// ...
+                    	return adapter;
+                    }
+                    createRequestMappingHandlerAdapter()返回RequestMappingHandlerAdapter实例后，将getArgumentResolvers()获取的自定义参数解析器设置到this.customArgumentResolvers属性中。
+                    看一下getArgumentResolvers()逻辑：
+                   configurers来自于IOC容器中WebMvcConfigurer类型的对象。
+
+                   因此用户可自定义WebMvcConfigurer对象并将其注入到IOC中，在自定义的WebMvcConfigurer类中通过复写addArgumentResolvers方法可实现自定义参数解析器的添加。
+                1.2.1.2 初始化阶段
+                    RequestMappingHandlerAdapter实现了InitializingBean接口，在Bean的初始化阶段中，会调用其afterPropertiesSet()钩子函数：
+                    可以看出所有的参数解析器来自有getDefaultArgumentResolvers()方法：
+                    这里包含了框架内置的参数解析器以及自定义参数解析器，需要注意一下几点：
+                        （1）getCustomArgumentResolvers()来自于【1】实例化阶段中设置的自定义参数解析器；
+                        （2）自定义参数解析器的顺序比较靠后，需要避免被其他参数解析器拦截，supportsParameter方法可以根据参数类型进行匹配。
+                        （3）首位端各存在一个RequestParamMethodArgumentResolver类型的参数解析器，区别是内部useDefaultResolution属性前者是false, 后者是true.
 
 
 
