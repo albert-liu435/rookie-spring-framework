@@ -3,6 +3,8 @@ Springboot启动流程
 参考项目：rookie-springboot-lifecycle
 
 参考图片：./pic/01_boot_lifecycle.webp
+        ./pic/01_lifecycle.webp
+        ./pic/01_lifecycle1.png
 
 
 
@@ -11,7 +13,16 @@ Springboot启动流程
     可以肯定的是，所有的标准的springboot的应用程序都是从run方法开始的。进入run方法后，会 new 一个SpringApplication 对象，创建这个对象的构造函数做了一些准备工作，编号第2~5步就是构造函数里面所做的事情
 
 2   确定应用程序类型
-    在SpringApplication的构造方法内，首先会通过 WebApplicationType.deduceFromClasspath()； 方法判断当前应用程序的容器，默认使用的是Servlet 容器，除了servlet之外，还有NONE 和 REACTIVE （响应式编程）；
+    在SpringApplication的构造方法内，首先会通过 WebApplicationType.deduceFromClasspath()； 方法判断当前应用程序的容器，默认使用的是Servlet 容器
+    2.1 从返回结果我们可以看出应用类型一共有三种，分别是
+        NONE： 非web应用，即不会启动服务器
+        SERVLET： 基于servlet的web应用
+        REACTIVE： 响应式web应用（暂未接触过）
+        判断一共涉及四个常量：
+            WEBFLUX_INDICATOR_CLASS ， WEBMVC_INDICATOR_CLASS，JERSEY_INDICATOR_CLASS，SERVLET_INDICATOR_CLASSES
+        springboot在初始化容器的时候，会对以上四个常量所对应的class进行判断，看看他们是否存在，从而返回应用类型！至于常量代表哪些class，大家可以自己跟踪看看，也在当前类中
+
+
 3   加载所有的初始化器
     这里加载的初始化器是springboot自带初始化器，从从 META-INF/spring.factories 配置文件中加载的，那么这个文件在哪呢？自带有2个，分别在源码的jar包的 spring-boot-autoconfigure 项目 和 spring-boot 项目里面各有一个
      自定义一个BootstrapRegistryInitializer,即CustomerBootstrapRegistryInitializer
@@ -66,9 +77,12 @@ Springboot启动流程
 
 文章来源：
 https://www.cnblogs.com/huigui-mint/p/17517759.html
-https://juejin.cn/column/7323793129709387816
 https://blog.51cto.com/u_16099185/11168788
+https://juejin.cn/column/7323793129709387816
 https://blog.csdn.net/good___lucky/article/details/140566881
+
+
+
 https://zhuanlan.zhihu.com/p/703215548
 http://www.360doc.com/content/21/0608/08/14348232_981066646.shtml
 https://www.cnblogs.com/hefeng2014/p/17769621.html
