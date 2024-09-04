@@ -7,6 +7,7 @@
 
 @Import({MyImportBeanDefinitionRegistrar.class})执行流程
 org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions--》org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForConfigurationClass--》org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsFromRegistrars--》org.springframework.context.annotation.ImportBeanDefinitionRegistrar#registerBeanDefinitions
+
 参考文档：https://www.cnblogs.com/jelly12345/p/15568061.html
 
 https://blog.csdn.net/weixin_43521890/article/details/122075847
