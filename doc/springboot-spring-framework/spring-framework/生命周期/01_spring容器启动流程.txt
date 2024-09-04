@@ -8,13 +8,17 @@
     }
 项目工程为：rookie-spring-framework-web
 
+
+
+
 Spring的启动流程可以归纳为三个步骤：
 
     1、初始化Spring容器，注册内置的AnnotatedBeanDefinitionReader将的BeanDefinition注入到容器中
     2、将配置类的BeanDefinition注册到容器中
     3、调用refresh()方法刷新容器
 
-参考图片：./启动流程/001.png
+参考图片：./pic/启动流程/001_lifecycle1.png
+    ./pic/启动流程/001_lifecycle.webp
 
 一、初始化流程
     spring容器的初始化时，通过this()调用了无参构造函数，主要做了以下三个事情：
