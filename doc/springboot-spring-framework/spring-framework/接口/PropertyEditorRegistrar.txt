@@ -1,3 +1,112 @@
-https://www.cnblogs.com/warehouse/p/9387668.html
+
+
+一   PropertyEditor作用
+    PropertyEditor在类型转换里的作用，以及举例说明了Spring内置实现的PropertyEditor们，它们各司其职完成 String <-> 各种类型 的互转
+    xxxRegistry用于管理（注册、修改、删除、查找）一类组件，当组件类型较多时使用注册中心统一管理是一种非常有效的手段。诚然，PropertyEditor就属于这种场景，管理它们的注册中心是PropertyEditorRegistry
+
+
+二   PropertyEditorRegistry
+    它是管理PropertyEditor的中心接口，负责注册、查找对应的PropertyEditor。
+        // @since 1.2.6
+        public interface PropertyEditorRegistry {
+
+            // 注册一个转换器：该type类型【所有的属性】都将交给此转换器去转换（即使是个集合类型）
+            // 效果等同于调用下方法：registerCustomEditor(type,null,editor);
+            void registerCustomEditor(Class<?> requiredType, PropertyEditor propertyEditor);
+            // 注册一个转换器：该type类型的【propertyPath】属性将交给此转换器
+            // 此方法是重点，详解见下文
+            void registerCustomEditor(Class<?> requiredType, String propertyPath, PropertyEditor propertyEditor);
+            // 查找到一个合适的转换器
+            PropertyEditor findCustomEditor(Class<?> requiredType, String propertyPath);
+
+        }
+    值得注意的是：虽然此接口看似实现者众多，但其实其它所有的实现关于PropertyEditor的管理部分都是委托给PropertyEditorRegistrySupport来管理，无一例外。因此，本文只需关注PropertyEditorRegistrySupport足矣，这为后面的高级应用（如数据绑定、BeanWrapper等）打好坚实基础。
+
+     用不太正确的理解可这么认为：PropertyEditorRegistry接口的唯一实现只有PropertyEditorRegistrySupport
+三   PropertyEditorRegistrySupport
+    它是PropertyEditorRegistry接口的实现，提供对default editors和custom editors的管理，最终主要为BeanWrapperImpl和DataBinder服务。
+    一般来说，Registry注册中心内部会使用多个Map来维护，代表注册表。此处也不例外：
+
+        // 装载【默认的】编辑器们，初始化的时候会注册好
+        private Map<Class<?>, PropertyEditor> defaultEditors;
+        // 如果想覆盖掉【默认行为】，可通过此Map覆盖（比如处理Charset类型你不想用默认的编辑器处理）
+        // 通过API：overrideDefaultEditor(...)放进此Map里
+        private Map<Class<?>, PropertyEditor> overriddenDefaultEditors;
+
+        // ======================注册自定义的编辑器======================
+        // 通过API：registerCustomEditor(...)放进此Map里（若没指定propertyPath）
+        private Map<Class<?>, PropertyEditor> customEditors;
+        // 通过API：registerCustomEditor(...)放进此Map里（若指定了propertyPath）
+        private Map<String, CustomEditorHolder> customEditorsForPath;
+
+        PropertyEditorRegistrySupport使用了4个 Map来维护不同来源的编辑器，作为查找的 “数据源”。
+        参考图片：./pic/propertyeditors/01_propertyeditors.png
+             这4个Map可分为两大组，并且有如下规律：
+
+            默认编辑器组：defaultEditors和overriddenDefaultEditors
+            overriddenDefaultEditors优先级 高于 defaultEditors
+            自定义编辑器组：customEditors和customEditorsForPath
+            它俩为互斥关系
+            细心的小伙伴会发现还有一个Map咱还未提到：
+                private Map<Class<?>, PropertyEditor> customEditorCache;
+            从属性名上理解，它表示customEditors属性的缓存。那么问题来了：customEditors和customEditorCache的数据结构一毛一样（都是Map），谈何缓存呢？直接从customEditors里获取值不更香吗？
+        customEditorCache作用解释
+        customEditorCache用于缓存自定义的编辑器，辅以成员属性customEditors属性一起使用。具体（唯一）使用方式在私有方法：根据类型获取自定义编辑器PropertyEditorRegistrySupport#getCustomEditor
+            private PropertyEditor getCustomEditor(Class<?> requiredType) {
+            	if (requiredType == null || this.customEditors == null) {
+            		return null;
+            	}
+            	PropertyEditor editor = this.customEditors.get(requiredType);
+
+            	// 重点：若customEditors没有并不代表处理不了，因为还得考虑父子关系、接口关系
+            	if (editor == null) {
+            		// 去缓存里查询，是否存在父子类作为key的情况
+            		if (this.customEditorCache != null) {
+            			editor = this.customEditorCache.get(requiredType);
+            		}
+
+            		// 若缓存没命中，就得遍历customEditors了，时间复杂度为O(n)
+            		if (editor == null) {
+            			for (Iterator<Class<?>> it = this.customEditors.keySet().iterator(); it.hasNext() && editor == null;) {
+            				Class<?> key = it.next();
+            				if (key.isAssignableFrom(requiredType)) {
+            					editor = this.customEditors.get(key);
+            					if (this.customEditorCache == null) {
+            						this.customEditorCache = new HashMap<Class<?>, PropertyEditor>();
+            					}
+            					this.customEditorCache.put(requiredType, editor);
+            				}
+            			}
+            		}
+            	}
+            	return editor;
+            }
+            这段逻辑不难理解，此流程用一张图可描绘如下：
+            参考图片：./pic/propertyeditors/02_propertyeditors.png
+            因为遍历customEditors属于比较重的操作（复杂度为O(n)），从而使用了customEditorCache避免每次出现父子类的匹配情况就去遍历一次，大大提高匹配效率。
+            customEditorCache的作用可总结为一句话：帮助customEditors属性装载对已匹配上的子类型的编辑器，从而避免了每次全部遍历，有效的提升了匹配效率。
+            值得注意的是，每次调用API向customEditors添加新元素时，customEditorCache就会被清空，因此因尽量避免在运行期注册编辑器，以避免缓存失效而降低性能
+    3.2 customEditorsForPath作用解释
+        上面说了，它是和customEditors互斥的。
+        customEditorsForPath的作用是能够实现更精准匹配，针对属性级别精准处理。此Map的值通过此API注册进来
+            public void registerCustomEditor(Class<?> requiredType, String propertyPath, PropertyEditor propertyEditor);
+        可能你会想，有了customEditors为何还需要customEditorsForPath呢？这里就不得不说两者的最大区别了：
+
+        customEditors：粒度较粗，通用性强。key为类型，即该类型的转换全部交给此编辑器处理
+        如：registerCustomEditor(UUID.class,new UUIDEditor())，那么此编辑器就能处理全天下所有的String <-> UUID 转换工作
+        customEditorsForPath：粒度细精确到属性（字段）级别，有点专车专座的意思
+        如：registerCustomEditor(Person.class, "cat.uuid" , new UUIDEditor())，那么此编辑器就有且仅能处理Person.cat.uuid属性，其它的一概不管
+        有了这种区别，注册中心在findCustomEditor(requiredType,propertyPath)匹配的时候也是按照优先级顺序执行匹配的：
+
+        若指定了propertyPath（不为null），就先去customEditorsForPath里找。否则就去customEditors里找
+        若没有指定propertyPath（为null)，就直接去customEditors里找
+
+        customEditorsForPath相当于给你留了钩子，当你在某些特殊情况需要特殊照顾的时候，你可以借助它来搞定，十分的方便。
+
+        此方式有必要记住并且尝试，在实际开发中使用得还是比较多的。特别在你不想全局定义，且要确保向下兼容性的时候，使用抽象接口类型 + 此种方式缩小影响范围将十分有用
+
+
 https://cloud.tencent.com/developer/article/1952804
+https://www.cnblogs.com/warehouse/p/9387668.html
+
 https://blog.csdn.net/cuichunchi/article/details/90407632

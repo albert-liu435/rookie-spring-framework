@@ -1,4 +1,4 @@
-package com.rookie.bigdata.springframework.beans.beanwrapper;
+package com.rookie.bigdata.springframework.beans.propertyeditors;
 
 import org.springframework.lang.Nullable;
 
@@ -9,13 +9,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * @Class MyCustomDateEditor
- * @Description
+ * @Class CustomerDateEditor
+ * @Description  可以参考 org.springframework.beans.propertyeditors.CustomDateEditor
  * @Author rookie
- * @Date 2024/7/10 14:50
+ * @Date 2024/9/4 15:39
  * @Version 1.0
  */
-public class MyCustomDateEditor extends PropertyEditorSupport {
+public class CustomerDateEditor extends PropertyEditorSupport {
 
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD");
 
