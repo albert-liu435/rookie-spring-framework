@@ -8,11 +8,9 @@ import org.springframework.beans.propertyeditors.UUIDEditor;
 import java.beans.PropertyEditor;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * @Class PersonCatUUIDEditorTest
- * @Description TODO
+ * @Description
  * @Author rookie
  * @Date 2024/9/4 18:04
  * @Version 1.0

@@ -1,12 +1,14 @@
 package com.rookie.bigdata.springframework.beans.propertyeditors;
 
+import com.rookie.bigdata.springframework.context.lifecycle.UserLifeCycle;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.util.Arrays;
 import java.util.Date;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class CustomerDateEditorTest
@@ -36,6 +38,18 @@ class CustomerDateEditorTest {
 
         // 输出最终包装的 MyBean 实例。
 //        System.out.println("MyBean = " + beanWrapper.getWrappedInstance());
-        log.info("Student:{}",beanWrapper.getWrappedInstance());
+        log.info("Student:{}", beanWrapper.getWrappedInstance());
+    }
+
+    @Test
+    void test01() {
+        AbstractApplicationContext context = new ClassPathXmlApplicationContext("springframework/beans/propertyeditors/propertyeditors-spring.xml");
+        final String[] beanDefinitionNames = context.getBeanDefinitionNames();
+        Arrays.stream(beanDefinitionNames).forEach(beanDefinitionName -> log.info("name contains {}.", beanDefinitionName));
+
+        Student student = (Student) context.getBean("student");
+        log.info("student: {}", student);
+
+        context.close();
     }
 }

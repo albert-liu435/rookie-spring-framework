@@ -6,8 +6,6 @@ import org.springframework.beans.PropertyEditorRegistrySupport;
 
 import java.beans.PropertyEditor;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * @Class AnimalPropertyEditorTest
  * @Description

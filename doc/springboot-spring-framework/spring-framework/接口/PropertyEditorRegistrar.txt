@@ -105,8 +105,39 @@
 
         此方式有必要记住并且尝试，在实际开发中使用得还是比较多的。特别在你不想全局定义，且要确保向下兼容性的时候，使用抽象接口类型 + 此种方式缩小影响范围将十分有用
 
+四   原理分析
+        测试项目：rookie-spring-framework-web
+        测试类：com.rookie.bigdata.springframework.beans.propertyeditors.CustomerDateEditorTest#test01
+    4.1 默认propertyEditor
+        org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory()
+            --->    		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
+            在方法prepareBeanFactory中，也正是applicationContext在功能上的扩展由此展开。为beanFactory增加一个默认的propertyEditor，这个主要是对bean的属性等设置管理一个工具。
+            注册了属性编辑器bean，ResourceEditorRegistrar类,进入ResourceEditorRegistrar，主要方法 registerCustomEditor
+        4.1.1   注册registerCustomEditors
+                org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean()
+                    --->    org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBeanInstance()
+                        --->    org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#instantiateBean()
+                            --->    org.springframework.beans.factory.support.AbstractBeanFactory#initBeanWrapper()
+                                --->    org.springframework.beans.factory.support.AbstractBeanFactory#registerCustomEditors()
+                                    --->    org.springframework.beans.support.ResourceEditorRegistrar#registerCustomEditors()
+
+        4.1.2   进行转换
+            org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean()
+                --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean()
+                    --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyPropertyValues()
+                        --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#convertForProperty()
+                            --->org.springframework.beans.BeanWrapperImpl#convertForProperty()
+                                --->org.springframework.beans.AbstractNestablePropertyAccessor#convertForProperty()
+                                    --->org.springframework.beans.AbstractNestablePropertyAccessor#convertIfNecessary()
+                                        --->org.springframework.beans.TypeConverterDelegate#convertIfNecessary()
+                                            --->org.springframework.beans.TypeConverterDelegate#doConvertValue()
+                                                --->org.springframework.beans.TypeConverterDelegate#doConvertTextValue()
+
+
+
 
 https://cloud.tencent.com/developer/article/1952804
+https://blog.csdn.net/cuichunchi/article/details/90407632
 https://www.cnblogs.com/warehouse/p/9387668.html
 
-https://blog.csdn.net/cuichunchi/article/details/90407632
+

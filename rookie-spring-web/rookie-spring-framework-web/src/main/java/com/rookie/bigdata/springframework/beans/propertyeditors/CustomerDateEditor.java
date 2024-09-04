@@ -19,8 +19,18 @@ public class CustomerDateEditor extends PropertyEditorSupport {
 
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD");
 
+    private String format = "yyyy-MM-dd";
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+
     @Override
     public void setAsText(@Nullable String text) throws IllegalArgumentException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+
+
         try {
             setValue(this.dateFormat.parse(text));
         }
