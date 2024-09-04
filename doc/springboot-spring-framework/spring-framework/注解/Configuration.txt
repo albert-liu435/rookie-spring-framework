@@ -1,0 +1,442 @@
+测试项目：
+rookie-spring-framework-web
+测试类:
+com.rookie.bigdata.springframework.context.annotation.configuration.ConfigurationAnnotationConfigTest
+
+
+1   注解、案例
+    1.1 @Configuration注解说明
+        @Configuration注解是从Spring 3.0版本开始加入的一个使Spring能够支持注解驱动开发的标注型注解，主要用于标注在类上。当某个类标注了@Configuration注解时，表示这个类是Spring的一个配置类。@Configuration注解能够替代Spring的applicationContext.xml文件，并且被@Configuration注解标注的类，能够自动注册到IOC容器并进行实例化。
+    1.2 注解源码
+        @Configuration注解中每个属性的含义如下所示
+            1.2.1   value：存入到Spring IOC容器中的Bean的id
+            1.2.2   proxyBeanMethods：从Spring 5.2版本开始加入到@Configuration注解，表示被@Configuration注解标注的配置类是否会被代理，并且在配置类中使用@Bean注解生成的Bean对象在IOC容器中是否是单例对象，取值为true或者false。当取值为true时，表示full（全局）模式，此模式下被@Configuration注解标注的配置类会被代理，在配置类中使用@Bean注解注入到IOC容器中的Bean对象是单例模式，无论调用多少次被@Bean注解标注的方法，返回的都是同一个Bean对象。当取值为false时，表示lite（轻量级）模式，此模式下被@Configuration注解标注的配置类不会被代理，在配置类中使用@Bean注解注入到IOC容器中的Bean对象不是单例模式，每次调用被@Bean注解标注的方法时，都会返回一个新的Bean对象。默认的取值为true。
+            1.2.3   enforceUniqueMethods：从Spring 6.0开始加入到@Configuration注解，指定使用@Bean注解标注的方法是否需要具有唯一的方法名称，取值为true或者false。当取值为true时，表示使用@Bean注解标注的方法具有唯一的方法名称，并且这些方法名称不会重叠。当取值为false时，表示使用@Bean注解标注的方法名称不唯一，存在被重叠的风险。默认取值为true。
+        从@Configuration注解的源码也可以看出，@Configuration注解本质上是一个@Component注解，所以，被@Configuration注解标注的配置类本身也会被注册到IOC容器中。同时，@Configuration注解也会被@ComponentScan注解扫描到。
+    1.3 注解使用场景
+        基于Spring的注解开发应用程序时，可以将@Configuration注解标注到某个类上。当某个类被@Configuration注解标注时，说明这个类是配置类，可以在这个类中使用@Bean注解向IOC容器中注入Bean对象，也可以使用@Autowired、@Inject和@Resource等注解来注入所需的Bean对象。
+        注意：基于Spring的注解模式开发应用程序时，在使用AnnotationConfigApplicationContext类创建IOC容器时，需要注意如下事项：
+        1.3.1   如果调用的是AnnotationConfigApplicationContext类中传入Class类型可变参数的构造方法来创建IOC容器，表示传入使用@Configuration注解标注的配置类的Class对象来创建IOC容器，则标注到配置类上的@Configuration注解可以省略。
+        1.3.2   如果调用的是AnnotationConfigApplicationContext类中传入String类型可变参数的构造方法来创建IOC容器，表示传入应用程序的包名来创建IOC容器，则标注到配置类上的@Configuration注解不能省略。
+
+        注意：当调用的是AnnotationConfigApplicationContext类中传入Class类型可变参数的构造方法来创建IOC容器时，如果传入的配置类上省略了@Configuration注解，则每次调用配置类中被@Bean注解标注的方法时，都会返回不同的Bean实例对象。
+2   案例
+
+
+
+3   源码解析部分
+    3.1 注册ConfigurationClassPostProcessor流程源码解析
+        启动Spring IOC容器时，@Configuration注解涉及到的ConfigurationClassPostProcessor核心类的注册流程的源码执行过程如下所示。
+        3.1.1   运行案例程序启动类ConfigurationAnnotationTest的main()方法
+               @Test
+                void monkey() {
+                    AnnotationConfigApplicationContext context =
+                            new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);
+                    ConfigurationAnnotationConfig config = context.getBean(ConfigurationAnnotationConfig.class);
+                    Monkey monkey1 = config.monkey();
+                    Monkey monkey2 = config.monkey();
+
+            //        @Configuration(proxyBeanMethods = false)  输出结果为false
+            //        @Configuration(proxyBeanMethods = true)  输出结果为true
+
+                    //不加@Configuration注解  输出结果为false
+                    log.error("monkey1 是否等于 monkey2 ===>> {}", (monkey1 == monkey2));
+
+
+                }
+            可以看到，在main()方法中会调用AnnotationConfigApplicationContext类的构造方法传入配置类ConfigurationAnnotationConfig的Class对象来创建IOC容器。接下来，会进入AnnotationConfigApplicationContext类的构造方法。
+        3.1.2   解析AnnotationConfigApplicationContext类的AnnotationConfigApplicationContext(Class<?>… componentClasses)构造方法
+                	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+                		this();
+                		register(componentClasses);
+                		refresh();
+                	}
+                可以看到，在上述构造方法中，会通过this()调用AnnotationConfigApplicationContext类的无参构造方法。
+        3.1.3   解析AnnotationConfigApplicationContext类的AnnotationConfigApplicationContext()无参构造方法
+                	public AnnotationConfigApplicationContext() {
+                		StartupStep createAnnotatedBeanDefReader = getApplicationStartup().start("spring.context.annotated-bean-reader.create");
+                		this.reader = new AnnotatedBeanDefinitionReader(this);
+                		createAnnotatedBeanDefReader.end();
+                		this.scanner = new ClassPathBeanDefinitionScanner(this);
+                	}
+               可以看到，在AnnotationConfigApplicationContext类的无参构造方法中，主要的逻辑就是实例化了AnnotatedBeanDefinitionReader类型的reader成员变量和ClassPathBeanDefinitionScanner类型的scanner成员变量。
+            3.1.3.1 reader：表示注解类型的Bean定义信息读取器，主要就是读取通过注解方式进行实例化的Bean的定义信息
+            3.1.3.2 scanner：表示类路径下的Bean定义扫描器，主要就是扫描类路径下的Bean定义信息。@Configuration注解涉及到的注册流程源码的执行过程，会执行实例化reader成员变量的代码，也就是下面的代码片段。
+                    this.reader = new AnnotatedBeanDefinitionReader(this);
+                    接下来，会调用AnnotatedBeanDefinitionReader类中的AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry)构造方法。
+        3.1.4   解析AnnotatedBeanDefinitionReader类中的AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry)构造方法
+            	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
+            		this(registry, getOrCreateEnvironment(registry));
+            	}
+            	可以看到，在上述构造方法中，通过this调用了AnnotatedBeanDefinitionReader类的AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry, Environment environment)构造方法。
+        3.1.5   解析AnnotatedBeanDefinitionReader类的AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry, Environment environment)构造方法
+            	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry, Environment environment) {
+            		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
+            		Assert.notNull(environment, "Environment must not be null");
+            		this.registry = registry;
+            		this.conditionEvaluator = new ConditionEvaluator(registry, environment, null);
+            		AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
+            	}
+            	可以看到，在上述构造方法中，最核心的逻辑就是调用了AnnotationConfigUtils工具类的registerAnnotationConfigProcessors()方法，将BeanDefinitionRegistry类型的registry对象传入方法中。其中，registry对象本质上就是一个AnnotationConfigApplicationContext类对象的实例，这是因为AnnotationConfigApplicationContext类继承了GenericApplicationContext类，而GenericApplicationContext类实现了BeanDefinitionRegistry接口。
+        3.1.6   解析AnnotationConfigUtils类的registerAnnotationConfigProcessors(BeanDefinitionRegistry registry)方法
+            	public static void registerAnnotationConfigProcessors(BeanDefinitionRegistry registry) {
+            		registerAnnotationConfigProcessors(registry, null);
+            	}
+            	可以看到，在AnnotationConfigUtils类的registerAnnotationConfigProcessors(BeanDefinitionRegistry registry)方法中调用了AnnotationConfigUtils类中的另外一个registerAnnotationConfigProcessors()方法。
+        3.1.7   解析AnnotationConfigUtils类的registerAnnotationConfigProcessors(BeanDefinitionRegistry registry, Object source)方法
+            这里，只给出在AnnotationConfigUtils类的registerAnnotationConfigProcessors(BeanDefinitionRegistry registry, Object source)方法中，将@Configuration注解涉及到的ConfigurationClassPostProcessor类的Bean定义信息注册到IOC容器中的核心代码
+            		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+            			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
+            			def.setSource(source);
+            			beanDefs.add(registerPostProcessor(registry, def, CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME));
+            		}
+                可以看到，会调用registerPostProcessor()方法注册后置处理器。
+        3.1.8   解析registerPostProcessor(BeanDefinitionRegistry registry, RootBeanDefinition definition, String beanName)方法
+            	private static BeanDefinitionHolder registerPostProcessor(
+            			BeanDefinitionRegistry registry, RootBeanDefinition definition, String beanName) {
+
+            		definition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
+            		registry.registerBeanDefinition(beanName, definition);
+            		return new BeanDefinitionHolder(definition, beanName);
+            	}
+            	可以看到，上述代码中，调用了registry参数的registerBeanDefinition()方法来注册ConfigurationClassPostProcessor类的Bean定义信息。最终会调用DefaultListableBeanFactory类的registerBeanDefinition()方法来注册ConfigurationClassPostProcessor类的Bean定义信息。
+        3.1.9   解析DefaultListableBeanFactory类的registerBeanDefinition(String beanName, BeanDefinition beanDefinition)方法
+            这里只展示核心代码
+                this.beanDefinitionMap.put(beanName, beanDefinition);
+            通过上述代码可知，向Spring的IOC容器中注册类的Bean定义信息，其实就是向beanDefinitionMap对象中添加元素，beanDefinitionMap对象本质上是一个ConcurrentHashMap对象。向beanDefinitionMap对象中添加的元素的Key为Bean的名称，Value为Bean的定义信息。
+        至此，@Configuration注解涉及到的ConfigurationClassPostProcessor类的注册过程分析完毕。
+
+    3.2 注册ConfigurationAnnotationConfig流程源码解析
+        启动Spring IOC容器时，向IOC容器中注册ConfigurationAnnotationConfig类的Bean定义信息的源码执行过程如下所示
+        3.2.1   运行案例程序启动类ConfigurationAnnotationTest的main()方法，并进入AnnotationConfigApplicationContext类的AnnotationConfigApplicationContext(Class<?>… componentClasses)构造方法。
+                	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+                		this();
+                		register(componentClasses);
+                		refresh();
+                	}
+            可以看到，在AnnotationConfigApplicationContext(Class<?>… componentClasses)方法中调用了register()方法，传入componentClasses参数进行注册。
+        3.2.2   解析AnnotationConfigApplicationContext类的register(Class<?>… componentClasses)方法
+            	@Override
+            	public void register(Class<?>... componentClasses) {
+            		Assert.notEmpty(componentClasses, "At least one component class must be specified");
+            		StartupStep registerComponentClass = getApplicationStartup().start("spring.context.component-classes.register")
+            				.tag("classes", () -> Arrays.toString(componentClasses));
+            		this.reader.register(componentClasses);
+            		registerComponentClass.end();
+            	}
+            可以看到，在register(Class<?>… componentClasses)方法中调用了reader的register()方法。
+        3.2.3   解析AnnotatedBeanDefinitionReader类的register(Class<?>… componentClasses)方法
+            	public void register(Class<?>... componentClasses) {
+            		for (Class<?> componentClass : componentClasses) {
+            			registerBean(componentClass);
+            		}
+            	}
+            可以看到，在register(Class<?>… componentClasses)方法中，会循环遍历传入的可变参数componentClasses，每次循环时，都会调用registerBean()方法。
+        3.2.4   解析AnnotatedBeanDefinitionReader类的registerBean(Class<?> beanClass)方法
+            	public void registerBean(Class<?> beanClass) {
+            		doRegisterBean(beanClass, null, null, null, null);
+            	}
+            可以看到，在registerBean(Class<?> beanClass)方法中调用了doRegisterBean()方法。
+        3.2.5   解析AnnotatedBeanDefinitionReader类的doRegisterBean(Class beanClass, String name, Class<? extends Annotation>[] qualifiers, Supplier supplier, BeanDefinitionCustomizer[] customizers)方法。
+                	private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
+                			@Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
+                			@Nullable BeanDefinitionCustomizer[] customizers) {
+
+                		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
+                		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
+                			return;
+                		}
+
+                		abd.setAttribute(ConfigurationClassUtils.CANDIDATE_ATTRIBUTE, Boolean.TRUE);
+                		abd.setInstanceSupplier(supplier);
+                		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
+                		abd.setScope(scopeMetadata.getScopeName());
+                		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
+
+                		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+                		if (qualifiers != null) {
+                			for (Class<? extends Annotation> qualifier : qualifiers) {
+                				if (Primary.class == qualifier) {
+                					abd.setPrimary(true);
+                				}
+                				else if (Lazy.class == qualifier) {
+                					abd.setLazyInit(true);
+                				}
+                				else {
+                					abd.addQualifier(new AutowireCandidateQualifier(qualifier));
+                				}
+                			}
+                		}
+                		if (customizers != null) {
+                			for (BeanDefinitionCustomizer customizer : customizers) {
+                				customizer.customize(abd);
+                			}
+                		}
+
+                		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+                		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+                		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
+                	}
+            可以看到，在doRegisterBean(Class beanClass, String name, Class<? extends Annotation>[] qualifiers, Supplier supplier, BeanDefinitionCustomizer[] customizers)方法中调用了BeanDefinitionReaderUtils类的registerBeanDefinition()方法。
+        3.2.6   解析BeanDefinitionReaderUtils类的registerBeanDefinition(BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)方法
+            	public static void registerBeanDefinition(
+            			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
+            			throws BeanDefinitionStoreException {
+
+            		// Register bean definition under primary name.
+            		String beanName = definitionHolder.getBeanName();
+            		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
+
+            		// Register aliases for bean name, if any.
+            		String[] aliases = definitionHolder.getAliases();
+            		if (aliases != null) {
+            			for (String alias : aliases) {
+            				registry.registerAlias(beanName, alias);
+            			}
+            		}
+            	}
+            可以看到，在registerBeanDefinition(BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)方法中通过调用registry的registerBeanDefinition()方法来向IOC容器中注册Bean定义信息。
+        注意：到目前为止，后续向IOC容器注册Bean定义信息的源码执行流程与向IOC容器中注册ConfigurationClassPostProcessor类的Bean定义信息的源码执行流程基本相同，这里不再赘述。
+    3.3 实例化流程源码解析
+        Spring IOC容器在刷新时，会实例化使用@Configuration注解标注的类，具体的源码执行流程如下所示。
+        3.3.1   运行案例程序启动类ConfigurationAnnotationTest的main()方法，并进入AnnotationConfigApplicationContext类的AnnotationConfigApplicationContext(Class<?>… componentClasses)构造方法。
+            	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+            		this();
+            		register(componentClasses);
+            		refresh();
+            	}
+                可以看到，在AnnotationConfigApplicationContext(Class<?>… componentClasses)构造方法中会调用refresh()方法刷新IOC容器。
+        3.3.2   解析AbstractApplicationContext类的refresh()方法
+                public void refresh() throws BeansException, IllegalStateException {
+                  // 省略一堆
+                  // Invoke factory processors registered as beans in the context.
+                                invokeBeanFactoryPostProcessors(beanFactory);
+                  // 省略一堆
+                }
+                可以看到，在refresh()方法中调用了invokeBeanFactoryPostProcessors()方法。
+        3.3.3   解析AbstractApplicationContext类的invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory)方法
+                可以看到，在invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory)方法中调用了PostProcessorRegistrationDelegate类的invokeBeanFactoryPostProcessors()方法。
+        3.3.4   解析PostProcessorRegistrationDelegate类的invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory, List beanFactoryPostProcessors)方法
+                public static void invokeBeanFactoryPostProcessors(
+                    ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
+                    //#################省略其他代码##################
+                    invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
+                    invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
+                    //#################省略其他代码##################
+                }
+                在invokeBeanFactoryPostProcessors()方法中会解析标注了@Configuration注解的类中标注了@Bean等注解的方法，生成相应的Bean定义信息注册到IOC容器中。这里，主要关注的是标注了@Configuration注解的类的实例化过程，所以，只需要关注invokeBeanFactoryPostProcessors()方法中的上述代码片段即可。
+
+                可以看到，在invokeBeanFactoryPostProcessors()方法中又调用了PostProcessorRegistrationDelegate类中的另一个invokeBeanFactoryPostProcessors()方法。
+        3.3.5   解析PostProcessorRegistrationDelegate类的invokeBeanFactoryPostProcessors(Collection<? extends BeanFactoryPostProcessor> postProcessors, ConfigurableListableBeanFactory beanFactory)方法
+                	private static void invokeBeanFactoryPostProcessors(
+                			Collection<? extends BeanFactoryPostProcessor> postProcessors, ConfigurableListableBeanFactory beanFactory) {
+
+                		for (BeanFactoryPostProcessor postProcessor : postProcessors) {
+                			StartupStep postProcessBeanFactory = beanFactory.getApplicationStartup().start("spring.context.bean-factory.post-process")
+                					.tag("postProcessor", postProcessor::toString);
+                			postProcessor.postProcessBeanFactory(beanFactory);
+                			postProcessBeanFactory.end();
+                		}
+                	}
+                可以看到，在invokeBeanFactoryPostProcessors()方法中，会循环遍历传递进来的所有postProcessors集合，每次循环时，都会使用一个postProcessor对象来接收postProcessors集合中的每一个元素，调用postProcessor对象的postProcessBeanFactory()方法，并传入beanFactory来实例化对象。
+        3.3.6   解析ConfigurationClassPostProcessor类中的postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)方法
+                	@Override
+                	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+                		int factoryId = System.identityHashCode(beanFactory);
+                		if (this.factoriesPostProcessed.contains(factoryId)) {
+                			throw new IllegalStateException(
+                					"postProcessBeanFactory already called on this post-processor against " + beanFactory);
+                		}
+                		this.factoriesPostProcessed.add(factoryId);
+                		if (!this.registriesPostProcessed.contains(factoryId)) {
+                			// BeanDefinitionRegistryPostProcessor hook apparently not supported...
+                			// Simply call processConfigurationClasses lazily at this point then.
+                			processConfigBeanDefinitions((BeanDefinitionRegistry) beanFactory);
+                		}
+
+                		enhanceConfigurationClasses(beanFactory);
+                		beanFactory.addBeanPostProcessor(new ImportAwareBeanPostProcessor(beanFactory));
+                	}
+                可以看到，在postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)方法中调用了enhanceConfigurationClasses()方法。
+        3.3.7   解析ConfigurationClassPostProcessor类的enhanceConfigurationClasses(ConfigurableListableBeanFactory beanFactory)方法
+            	public void enhanceConfigurationClasses(ConfigurableListableBeanFactory beanFactory) {
+            		StartupStep enhanceConfigClasses = this.applicationStartup.start("spring.context.config-classes.enhance");
+            		Map<String, AbstractBeanDefinition> configBeanDefs = new LinkedHashMap<>();
+            		for (String beanName : beanFactory.getBeanDefinitionNames()) {
+            			BeanDefinition beanDef = beanFactory.getBeanDefinition(beanName);
+            			Object configClassAttr = beanDef.getAttribute(ConfigurationClassUtils.CONFIGURATION_CLASS_ATTRIBUTE);
+            			AnnotationMetadata annotationMetadata = null;
+            			MethodMetadata methodMetadata = null;
+            			if (beanDef instanceof AnnotatedBeanDefinition annotatedBeanDefinition) {
+            				annotationMetadata = annotatedBeanDefinition.getMetadata();
+            				methodMetadata = annotatedBeanDefinition.getFactoryMethodMetadata();
+            			}
+            			if ((configClassAttr != null || methodMetadata != null) &&
+            					(beanDef instanceof AbstractBeanDefinition abd) && !abd.hasBeanClass()) {
+            				// Configuration class (full or lite) or a configuration-derived @Bean method
+            				// -> eagerly resolve bean class at this point, unless it's a 'lite' configuration
+            				// or component class without @Bean methods.
+            				boolean liteConfigurationCandidateWithoutBeanMethods =
+            						(ConfigurationClassUtils.CONFIGURATION_CLASS_LITE.equals(configClassAttr) &&
+            							annotationMetadata != null && !ConfigurationClassUtils.hasBeanMethods(annotationMetadata));
+            				if (!liteConfigurationCandidateWithoutBeanMethods) {
+            					try {
+            						abd.resolveBeanClass(this.beanClassLoader);
+            					}
+            					catch (Throwable ex) {
+            						throw new IllegalStateException(
+            								"Cannot load configuration class: " + beanDef.getBeanClassName(), ex);
+            					}
+            				}
+            			}
+            			if (ConfigurationClassUtils.CONFIGURATION_CLASS_FULL.equals(configClassAttr)) {
+            				if (!(beanDef instanceof AbstractBeanDefinition abd)) {
+            					throw new BeanDefinitionStoreException("Cannot enhance @Configuration bean definition '" +
+            							beanName + "' since it is not stored in an AbstractBeanDefinition subclass");
+            				}
+            				else if (logger.isWarnEnabled() && beanFactory.containsSingleton(beanName)) {
+            					logger.warn("Cannot enhance @Configuration bean definition '" + beanName +
+            							"' since its singleton instance has been created too early. The typical cause " +
+            							"is a non-static @Bean method with a BeanDefinitionRegistryPostProcessor " +
+            							"return type: Consider declaring such methods as 'static' and/or marking the " +
+            							"containing configuration class as 'proxyBeanMethods=false'.");
+            				}
+            				configBeanDefs.put(beanName, abd);
+            			}
+            		}
+            		if (configBeanDefs.isEmpty()) {
+            			// nothing to enhance -> return immediately
+            			enhanceConfigClasses.end();
+            			return;
+            		}
+
+            		ConfigurationClassEnhancer enhancer = new ConfigurationClassEnhancer();
+            		for (Map.Entry<String, AbstractBeanDefinition> entry : configBeanDefs.entrySet()) {
+            			AbstractBeanDefinition beanDef = entry.getValue();
+            			// If a @Configuration class gets proxied, always proxy the target class
+            			beanDef.setAttribute(AutoProxyUtils.PRESERVE_TARGET_CLASS_ATTRIBUTE, Boolean.TRUE);
+            			// Set enhanced subclass of the user-specified bean class
+            			Class<?> configClass = beanDef.getBeanClass();
+            			Class<?> enhancedClass = enhancer.enhance(configClass, this.beanClassLoader);
+            			if (configClass != enhancedClass) {
+            				if (logger.isTraceEnabled()) {
+            					logger.trace(String.format("Replacing bean definition '%s' existing class '%s' with " +
+            							"enhanced class '%s'", entry.getKey(), configClass.getName(), enhancedClass.getName()));
+            				}
+            				beanDef.setBeanClass(enhancedClass);
+            			}
+            		}
+            		enhanceConfigClasses.tag("classCount", () -> String.valueOf(configBeanDefs.keySet().size())).end();
+            	}
+            可以看到，在enhanceConfigurationClasses(ConfigurableListableBeanFactory beanFactory)方法中，主要是使用ConfigurationClassEnhancer对象的enhance()方法生成代理类，也就是使用CGLib生成代理类。
+        3.3.8   解析ConfigurationClassEnhancer类的enhance(Class<?> configClass, ClassLoader classLoader)方法
+                public Class<?> enhance(Class<?> configClass, @Nullable ClassLoader classLoader) {
+                		// 省略一些代码
+                		Class<?> enhancedClass = createClass(newEnhancer(configClass, classLoader));
+                		// 省略一些代码
+                		return enhancedClass;
+                	}
+            可以看到，在enhance(Class<?> configClass, ClassLoader classLoader)方法中调用了createClass()方法创建代理类，在这之前先调用newEnhancer()方法实例化Enhancer对象。
+        3.3.9   解析ConfigurationClassEnhancer类的newEnhancer(Class<?> configSuperClass, ClassLoader classLoader)方法
+                private Enhancer newEnhancer(Class<?> configSuperClass, @Nullable ClassLoader classLoader) {
+                		Enhancer enhancer = new Enhancer();
+                		enhancer.setSuperclass(configSuperClass);
+                		enhancer.setInterfaces(new Class<?>[] {EnhancedConfiguration.class});
+                		enhancer.setUseFactory(false);
+                		enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
+                		enhancer.setAttemptLoad(true);
+                		enhancer.setStrategy(new BeanFactoryAwareGeneratorStrategy(classLoader));
+                		enhancer.setCallbackFilter(CALLBACK_FILTER);
+                		enhancer.setCallbackTypes(CALLBACK_FILTER.getCallbackTypes());
+                		return enhancer;
+                	}
+            可以看到，newEnhancer()方法中主要是生成CGLib动态代理的Enhancer对象，后续会使用Enhancer对象生成代理类。
+
+            在newEnhancer()方法中为要生成的代理类设置了父类和接口，由于为要生成的代理类设置的接口为EnhancedConfiguration，同时，EnhancedConfiguration接口继承了BeanFactoryAware接口，所以，在后续生成的代理类中可以调用BeanFactoryAware接口的setBeanFactory(BeanFactory beanFactory)方法获取到beanFactory对象。
+        3.3.10  解析ConfigurationClassEnhancer类的createClass(Enhancer enhancer)方法
+            private Class<?> createClass(Enhancer enhancer) {
+            		Class<?> subclass = enhancer.createClass();
+            		// Registering callbacks statically (as opposed to thread-local)
+            		// is critical for usage in an OSGi environment (SPR-5932)...
+            		Enhancer.registerStaticCallbacks(subclass, CALLBACKS);
+            		return subclass;
+            	}
+            可以看到，在createClass(Enhancer enhancer)方法中，主要调用了enhancer对象的createClass()方法来创建代理类，因为使用CGLib创建出来的代理类是目标类的子类，所以，这里创建出来的代理类就是目标类的子类。
+            最后，再来关注下Enhancer类中传入的CALLBACKS参数。
+        3.3.11  解析CALLBACKS
+                // The callbacks to use. Note that these callbacks must be stateless.
+                	static final Callback[] CALLBACKS = new Callback[] {
+                			new BeanMethodInterceptor(),
+                			new BeanFactoryAwareMethodInterceptor(),
+                			NoOp.INSTANCE
+                	};
+                可以看到，CALLBACKS是一个Callback类型的数组，数组中的每个元素都是一个Callback类型的对象。其中，BeanMethodInterceptor类和BeanFactoryAwareMethodInterceptor类也是拦截器类型。接下来，以BeanMethodInterceptor类为例进行介绍。
+        3.3.13  解析BeanMethodInterceptor类
+            BeanMethodInterceptor实现了MethodInterceptor接口和ConditionalCallback接口，主要的作用就是对标注了@Bean的注解的方法进行拦截，执行intercept(Object enhancedConfigInstance, Method beanMethod, Object[] beanMethodArgs, MethodProxy cglibMethodProxy)方法，生成Bean的实例对象。在方法中有如下一段代码逻辑。
+            		@Override
+            		@Nullable
+            		public Object intercept(Object enhancedConfigInstance, Method beanMethod, Object[] beanMethodArgs,
+            					MethodProxy cglibMethodProxy) throws Throwable {
+
+            			ConfigurableBeanFactory beanFactory = getBeanFactory(enhancedConfigInstance);
+            			String beanName = BeanAnnotationHelper.determineBeanNameFor(beanMethod);
+
+            			// Determine whether this bean is a scoped-proxy
+            			if (BeanAnnotationHelper.isScopedProxy(beanMethod)) {
+            				String scopedBeanName = ScopedProxyCreator.getTargetBeanName(beanName);
+            				if (beanFactory.isCurrentlyInCreation(scopedBeanName)) {
+            					beanName = scopedBeanName;
+            				}
+            			}
+
+            			// To handle the case of an inter-bean method reference, we must explicitly check the
+            			// container for already cached instances.
+
+            			// First, check to see if the requested bean is a FactoryBean. If so, create a subclass
+            			// proxy that intercepts calls to getObject() and returns any cached bean instance.
+            			// This ensures that the semantics of calling a FactoryBean from within @Bean methods
+            			// is the same as that of referring to a FactoryBean within XML. See SPR-6602.
+            			if (factoryContainsBean(beanFactory, BeanFactory.FACTORY_BEAN_PREFIX + beanName) &&
+            					factoryContainsBean(beanFactory, beanName)) {
+            				Object factoryBean = beanFactory.getBean(BeanFactory.FACTORY_BEAN_PREFIX + beanName);
+            				if (factoryBean instanceof ScopedProxyFactoryBean) {
+            					// Scoped proxy factory beans are a special case and should not be further proxied
+            				}
+            				else {
+            					// It is a candidate FactoryBean - go ahead with enhancement
+            					return enhanceFactoryBean(factoryBean, beanMethod.getReturnType(), beanFactory, beanName);
+            				}
+            			}
+
+            			if (isCurrentlyInvokedFactoryMethod(beanMethod)) {
+            				// The factory is calling the bean method in order to instantiate and register the bean
+            				// (i.e. via a getBean() call) -> invoke the super implementation of the method to actually
+            				// create the bean instance.
+            				if (logger.isInfoEnabled() &&
+            						BeanFactoryPostProcessor.class.isAssignableFrom(beanMethod.getReturnType())) {
+            					logger.info(String.format("@Bean method %s.%s is non-static and returns an object " +
+            									"assignable to Spring's BeanFactoryPostProcessor interface. This will " +
+            									"result in a failure to process annotations such as @Autowired, " +
+            									"@Resource and @PostConstruct within the method's declaring " +
+            									"@Configuration class. Add the 'static' modifier to this method to avoid " +
+            									"these container lifecycle issues; see @Bean javadoc for complete details.",
+            							beanMethod.getDeclaringClass().getSimpleName(), beanMethod.getName()));
+            				}
+            				return cglibMethodProxy.invokeSuper(enhancedConfigInstance, beanMethodArgs);
+            			}
+
+            			return resolveBeanReference(beanMethod, beanMethodArgs, beanFactory, beanName);
+            		}
+                上述代码能够保证在类上添加@Configuration注解后，只会为类生成一个代理对象。也就是说，上述代码的逻辑能够保证标注了@Configuration注解的类生成的代理类是单例模式的。
+
+                因为使用CGLib创建出来的代理类是目标类的子类，所以第一次执行上述代码片段时，会调用cglibMethodProxy的invokeSuper()方法执行父类的方法，也就是执行目标类的方法。第二次执行上述代码片段时，会调用resolveBeanReference()方法。
+        3.3.13  解析BeanMethodInterceptor类的resolveBeanReference(Method beanMethod, Object[] beanMethodArgs, ConfigurableBeanFactory beanFactory, String beanName)方法
+                可以看到，从resolveBeanReference()方法中，会通过beanFactory获取已经初始化好的Bean对象，并将这个已经初始化好的bean对象返回。并不会再进行第二次初始化的操作。
+
+                所以，在类上添加@Configuration注解后，Spring能够保证为类生成的代理类是单例的
+
+
+文章来源:
+https://blog.csdn.net/qq_45721579/article/details/136235459
+https://blog.csdn.net/scj1022/article/details/137430561
+https://www.cnblogs.com/dreamroute/p/15944957.html

@@ -60,5 +60,6 @@ class ConfigurationAnnotationConfigTest {
         log.error("monkey1 是否等于 monkey2 ===>> {}", (monkey1 == monkey2));
 
 
+
     }
 }
