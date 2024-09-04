@@ -1,0 +1,30 @@
+测试项目：
+rookie-spring-framework-web
+测试类:
+com.rookie.bigdata.springframework.context.aware.AwareAnnoConfigTest
+
+
+执行流程:如图：./pic/aware/01_aware.webp,./pic/aware/02_aware.webp,./pic/aware/03_aware.webp,./pic/aware/04_aware.webp,./pic/aware/05_aware.webp
+1   Aware接口简介
+    Spring的依赖注入的最大亮点是所有的Bean对Spring容器的存在是没有意识的，我们可以将Spring容器换成其他的容器，Spring容器中的Bean的耦合度因此也是极低的。但是我们在实际的开发中，我们却经常要用到Spring容器本身的功能资源，所以Spring容器中的Bean此时就要意识到Spring容器的存在才能调用Spring所提供的资源。我们通过Spring提供的一系列接口Spring Aware来实现具体的功能。
+    Aware是一个具有标识作用的超级接口，实现该接口的bean是具有被spring 容器通知的能力的，而被通知的方式就是通过回调。也就是说：直接或间接实现了这个接口的类，都具有被spring容器通知的能力。
+    1.1 常见Aware的作用
+        BeanNameAware   获取bean名称    BeanFactory Bean后处理器的BeforeInitialization方法之前
+        BeanClassLoaderAware    获取bean的类加载器 BeanFactory Bean后处理器的BeforeInitialization方法之前
+        BeanFactoryAware    获取bean工厂（建议用下面的ApplicationContextAware） BeanFactory Bean后处理器的BeforeInitialization方法之前
+        EnvironmentAware    获取环境相关信息，如属性、配置信息等  ApplicationContext  Bean后处理器的BeforeInitialization方法中
+        EmbeddedValueResolverAware  获取值解析器  ApplicationContext  Bean后处理器的BeforeInitialization方法中
+        ResourceLoaderAware 获取资源加载器 ApplicationContext   Bean后处理器的BeforeInitialization方法中
+        ApplicationEventPublisherAware  获取事件广播器，发布事件使用  ApplicationContext  Bean后处理器的BeforeInitialization方法中
+        MessageSourceAware  获取消息资源  ApplicationContext  Bean后处理器的BeforeInitialization方法中
+        ApplicationContextAware 获取ApplicationContext    ApplicationContext  Bean后处理器的BeforeInitialization方法中
+
+        Spring Aware的目的是为了让Bean获得Spring容器的服务。因为ApplicationContext接口集成了MessageSource接口、ApplicationEventPublisher接口和ResourceLoader接口，因此当Bean继承自ApplicationContextAware的时候就可以得到Spring容器的所有服务。
+
+
+
+
+文章来源：
+https://juejin.cn/post/6844903938131509256
+https://juejin.cn/post/7110856807039369246
+https://blog.csdn.net/ww2651071028/article/details/130519309
