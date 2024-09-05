@@ -1,7 +1,5 @@
 package com.rookie.bigdata.springframework.context.annotation.componentscan.base;
 
-import org.springframework.stereotype.Service;
-
 /**
  * @Class MyServiceImpl
  * @Description

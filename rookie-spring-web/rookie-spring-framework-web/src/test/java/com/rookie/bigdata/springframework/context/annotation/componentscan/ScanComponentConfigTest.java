@@ -1,20 +1,19 @@
 package com.rookie.bigdata.springframework.context.annotation.componentscan;
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
  * @Class ScanComponentConfigTest
- * @Description https://blog.csdn.net/qq_39017153/article/details/132160902
- * https://blog.csdn.net/qq_36602071/article/details/129418212
+ * @Description
  * @Author rookie
- * @Date 2024/7/1 17:21
+ * @Date 2024/9/5 11:54
  * @Version 1.0
  */
 @Slf4j
 class ScanComponentConfigTest {
-
 
     @Test
     void test01() {
@@ -29,5 +28,4 @@ class ScanComponentConfigTest {
             System.out.println(name);
         }
     }
-
 }

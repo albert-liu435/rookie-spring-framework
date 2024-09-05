@@ -1,3 +1,9 @@
+文章来源:
+https://blog.csdn.net/qq_45721579/article/details/136235459
+https://blog.csdn.net/scj1022/article/details/137430561
+https://www.cnblogs.com/dreamroute/p/15944957.html
+
+
 测试项目：
 rookie-spring-framework-web
 测试类:
@@ -436,7 +442,4 @@ com.rookie.bigdata.springframework.context.annotation.configuration.Configuratio
                 所以，在类上添加@Configuration注解后，Spring能够保证为类生成的代理类是单例的
 
 
-文章来源:
-https://blog.csdn.net/qq_45721579/article/details/136235459
-https://blog.csdn.net/scj1022/article/details/137430561
-https://www.cnblogs.com/dreamroute/p/15944957.html
+

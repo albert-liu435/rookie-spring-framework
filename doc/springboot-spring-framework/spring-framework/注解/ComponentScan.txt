@@ -1,0 +1,108 @@
+文章来源：https://blog.csdn.net/qq_39017153/article/details/132160902
+https://blog.csdn.net/qq_36602071/article/details/129418212
+
+
+一   简单介绍
+    翻开Spring的源码找到@ComponentScan注解的源码，发现注解类上赫然标注着Since: 3.1字样。也就是说，@ComponentScan注解是从Spring的3.1版本开始提供的。在@ComponentScan注解上，标注了一个@Repeatable注解，@Repeatable注解的属性值为ComponentScans.class。再次翻看下@ComponentScans注解的源码，类上标注着Since: 4.3字样。也就是说，@ComponentScans注解是从Spring4.3版本开始提供的。@ComponentScans注解就相当于是@ComponentScan注解的一个数组，在@ComponentScans注解中可以多次使用@ComponentScan注解来扫描不同的包路径。
+二   注解说明
+    @ComponentScans注解可以看作是@ComponentScan注解的一个数组，在@ComponentScans注解中可以多次标注@ComponentScan注解。
+    @ComponentScan注解最核心的功能就是Spring IOC容器在刷新的时候会扫描对应包下标注了@Component注解、@Configuration注解、@Repository注解、@Service注解和@Controller等等注解的类，生成扫描到的类的Bean定义信息，整体流程与注册ConfigurationClassPostProcessor类的Bean定义信息的流程基本一致，最终都会将其保存到BeanFactory中的beanDefinitionMap中。
+    2.1 @ComponentScans注解源码
+        可以看到，@ComponentScans注解的源码还是比较简单的，在@ComponentScans注解中存在一个ComponentScan[]数组类型的value属性，说明@ComponentScans注解的属性可以存放一个@ComponentScan注解类型的数组，可以在ComponentScans注解中多次添加@ComponentScan注解。从@ComponentScans注解的源码还可以看出，@ComponentScans注解从Spring 4.3版本开始提供。
+    2.2 @ComponentScan注解源码
+        可以看到，Spring从3.1版本开始提供@ComponentScan注解，@ComponentScan注解中还有一个内部注解@Filter。
+        2.2.1   @ComponentScan注解中的每个属性的含义如下所示：
+            1   value：作用同basePackages属性，String[]数组类型，指定要扫描的包名。如果指定了要扫描的包名，则Spring会扫描指定的包及其子包下的所有类。
+            2    basePackages：作用同value属性，String[]数组类型，指定要扫描的包名。如果指定了要扫描的包名，则Spring会扫描指定的包及其子包下的所有类。
+            3    basePackageClasses：Class<?>[]数组类型，指定要扫描的类的Class对象。该类所在包及其子包下的其他类也会被扫描并注入IOC容器。（例如：@ComponentScan(basePackageClasses = UserService.class)，则UserService所在包及其子包下的其他类也会被扫描）
+            4    nameGenerator：Class<? extends BeanNameGenerator>类型，指定扫描类时，向IOC注入Bean对象时的命名规则。
+            5    scopeResolver：Class<? extends ScopeMetadataResolver>类型，扫描类时，用于处理并转换符合条件的Bean的作用范围。
+            6    scopedProxy：ScopedProxyMode类型，指定生成Bean对象时的代理方式，默认的代理方法是DEFAULT，也就是不使用代理。关于ScopedProxyMode的更多详细的内容，参见后面章节。
+            7    resourcePattern：String类型，用于指定扫描的文件类型，默认是扫描指定包下的**/.class（**表示当前包及其子包，/.class表示任意类名的字节码）。
+            8    useDefaultFilters：boolean类型，是否自动检测@Component @Repository @Service @Controller注解，默认是true。
+            9    includeFilters：Filter[]数组类型，自定义组件扫描过滤规则，符合过滤规则的类的Bean定义信息会被注册到IOC容器中。
+            10    includeFilters表示只包含对应的规则，当使用includeFilters()来指定只包含哪些注解标注的类时，需要禁用默认的过滤规则，也就是需要将useDefaultFilters属性设置为false。并且，除了符合过滤规则的类外，Spring内置的如下名称的类的Bean定义信息注册到IOC容器时不受过滤规则限制，如下所示：
+                    org.springframework.context.annotation.internalConfigurationAnnotationProcessor
+                    org.springframework.context.annotation.internalAutowiredAnnotationProcessor
+                    org.springframework.context.event.internalEventListenerProcessor
+                    org.springframework.context.event.internalEventListenerFactory
+            11    excludeFilters：Filter[]数组类型，自定义组件扫描过滤规则，excludeFilters表示排除使用对应的规则，符合过滤规则的类的Bean定义信息不会被注册到IOC容器中。
+            12    lazyInit：boolean类型，从Spring4.1版本开始提供，表示Spring扫描组件时是否采用懒加载 ，默认false，表示不开启懒加载。
+
+        2.2.2   @Filter注解中的每个属性的含义如下所示：
+            1   type：FilterType类型，表示过滤规则的类型。关于FilterType的更多详细的内容，参见后面章节。
+            2   value：Class<?>[]数组类型，过滤符合规则的类，作用同classes属性。
+            3   classes：Class<?>[]数组类型，过滤符合规则的类，作用同value属性。
+            4   pattern：如果FilterType取值为ASPECTJ，则此属性表示ASPECTJ表达式。
+    2.3 ScopedProxyMode枚举类源码
+        ScopedProxyMode枚举类表示Spring指定生成Bean对象时的代理方式
+        ScopedProxyMode类是从Spring 2.5版本开始提供的枚举类，每个属性的含义如下所示。
+            DEFAULT：默认的代理方式，也就是不使用代理，除非在component-scan级别使用了不同的配置。
+            NO：不使用代理。
+            INTERFACES：基于JDK动态代理实现接口代理对象。
+            TARGET_CLASS：基于CGLib动态代理创建类代理对象
+    2.4 FilterType枚举类源码
+        FilterType枚举类表示Spring扫描类时的过滤类型
+        FilterType类是Spring2.5版本开始提供的枚举类，每个属性的含义如下所示。
+            ANNOTATION：按照注解进行过滤。
+            ASSIGNABLE_TYPE：按照给定的类型进行过滤。
+            ASPECTJ：按照ASPECTJ表达式进行过滤。
+            REGEX：按照正则表达式进行过滤。
+            CUSTOM：按照自定义规则进行过滤，使用自定义过滤规则时，自定义的过滤器需要实现org.springframework.core.type.filter.TypeFilter接口。
+        在FilterType枚举类中，ANNOTATION和ASSIGNABLE_TYPE是比较常用的，ASPECTJ和REGEX不太常用，如果FilterType枚举类中的类型无法满足日常开发需求时，可以通过实现org.springframework.core.type.filter.TypeFilter接口来自定义过滤规则，此时，将@Filter中的type属性设置为FilterType.CUSTOM，classes属性设置为自定义规则的类对应的Class对象。
+
+三   使用案例
+    用Spring的注解开发应用程序时，如果需要将标注了Spring注解的类注入到IOC容器中，就需要使用@ComponentScan注解来扫描指定包下的类。同时，在Spring4.3版本开始，提供了@ComponentScans注解，在@ComponentScans注解中，支持配置多个@ComponentScan注解来扫描不同的包，配置不同的过滤规则。
+
+
+
+四   原理及源码分析
+        processConfigBeanDefinitions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

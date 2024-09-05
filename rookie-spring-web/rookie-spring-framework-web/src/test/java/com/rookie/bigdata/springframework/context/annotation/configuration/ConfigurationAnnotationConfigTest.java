@@ -27,11 +27,13 @@ class ConfigurationAnnotationConfigTest {
         AnnotationConfigApplicationContext context =
                 new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);
         ConfigurationAnnotationConfig config = context.getBean(ConfigurationAnnotationConfig.class);
+
+        context.close();
     }
 
 
     @Test
-    void testSupplier(){
+    void testSupplier() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);
         // 定义一个BeanDefinition
         GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
@@ -41,8 +43,6 @@ class ConfigurationAnnotationConfigTest {
         context.registerBeanDefinition("map", beanDefinition);
         System.out.println(context.getBean("map"));
     }
-
-
 
 
     @Test
@@ -58,7 +58,6 @@ class ConfigurationAnnotationConfigTest {
 
         //不加@Configuration注解  输出结果为false
         log.error("monkey1 是否等于 monkey2 ===>> {}", (monkey1 == monkey2));
-
 
 
     }
