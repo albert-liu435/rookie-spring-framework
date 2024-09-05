@@ -1,6 +1,11 @@
-文章来源：https://blog.csdn.net/qq_39017153/article/details/132160902
+文章来源：
+https://jianshu.com/p/931ccb9690f2
 https://blog.csdn.net/qq_36602071/article/details/129418212
+https://blog.csdn.net/qq_39017153/article/details/132160902
+https://blog.csdn.net/qq_36602071/article/details/129421218
 
+测试项目：rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.context.annotation.componentscan.ScanComponentConfigTest
 
 一   简单介绍
     翻开Spring的源码找到@ComponentScan注解的源码，发现注解类上赫然标注着Since: 3.1字样。也就是说，@ComponentScan注解是从Spring的3.1版本开始提供的。在@ComponentScan注解上，标注了一个@Repeatable注解，@Repeatable注解的属性值为ComponentScans.class。再次翻看下@ComponentScans注解的源码，类上标注着Since: 4.3字样。也就是说，@ComponentScans注解是从Spring4.3版本开始提供的。@ComponentScans注解就相当于是@ComponentScan注解的一个数组，在@ComponentScans注解中可以多次使用@ComponentScan注解来扫描不同的包路径。
@@ -57,9 +62,55 @@ https://blog.csdn.net/qq_36602071/article/details/129418212
 
 
 四   原理及源码分析
-        processConfigBeanDefinitions
+        1、BeanDefinitionRegistryPostProcessor的后置处理器
+        org.springframework.context.support.PostProcessorRegistrationDelegate#invokeBeanDefinitionRegistryPostProcessors()
+            --->org.springframework.context.annotation.ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry()
+                2、处理Config的Bean
+                --->org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions()
 
+                    --->org.springframework.context.annotation.ConfigurationClassParser#parse()
+                        3、对ScanComponentConfig进行解析
+                        --->org.springframework.context.annotation.ConfigurationClassParser#processConfigurationClass()
+                            --->org.springframework.context.annotation.ConfigurationClassParser#doProcessConfigurationClass()
+    4.2 处理Configuration注解的类
+        4.2.1   首先查询出BeanDefinitionRegistry中BeanDefinition所有的名称，然后循环遍历candidateNames并根据Bean的名称获取BeanDefinition,如果BeanDefinition为ScanComponentConfig,则加入到configCandidates中
+                		List<BeanDefinitionHolder> configCandidates = new ArrayList<>();
+                		String[] candidateNames = registry.getBeanDefinitionNames();
 
+                		for (String beanName : candidateNames) {
+                			BeanDefinition beanDef = registry.getBeanDefinition(beanName);
+                			if (beanDef.getAttribute(ConfigurationClassUtils.CONFIGURATION_CLASS_ATTRIBUTE) != null) {
+                				if (logger.isDebugEnabled()) {
+                					logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
+                				}
+                			}
+                			else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
+                				configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
+                			}
+                		}
+        4.2.2   如果configCandidates存在多个，则会按照order进行排序
+                		configCandidates.sort((bd1, bd2) -> {
+                			int i1 = ConfigurationClassUtils.getOrder(bd1.getBeanDefinition());
+                			int i2 = ConfigurationClassUtils.getOrder(bd2.getBeanDefinition());
+                			return Integer.compare(i1, i2);
+                		});
+        4.2.3   创建爱ConfigurationClassParser，并对configCandidates进行解析。
+                		ConfigurationClassParser parser = new ConfigurationClassParser(
+                				this.metadataReaderFactory, this.problemReporter, this.environment,
+                				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
+
+               			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
+               			parser.parse(candidates);
+               			parser.validate();
+
+               			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
+               			configClasses.removeAll(alreadyParsed);
+        //TODO
+    4.3 对ScanComponentConfig进行解析
+        4.3.1   首先获取注解ComponentScan的信息
+                Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
+                				sourceClass.getMetadata(), ComponentScan.class, ComponentScans.class,
+                				MergedAnnotation::isDirectlyPresent);
 
 
 
