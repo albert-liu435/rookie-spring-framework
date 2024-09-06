@@ -1,4 +1,4 @@
-package com.rookie.bigdata.boot.env;
+package com.rookie.bigdata.springframework.boot.env;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @Class TxtPropertySourceLoaderTest
  * @Description
  * @Author rookie
- * @Date 2024/8/20 16:44
+ * @Date 2024/9/6 14:47
  * @Version 1.0
  */
 @SpringBootTest

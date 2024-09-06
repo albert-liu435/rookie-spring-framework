@@ -1,4 +1,4 @@
-package com.rookie.bigdata.beans.factory.annotation;
+package com.rookie.bigdata.springframework.beans.factory.annotation;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

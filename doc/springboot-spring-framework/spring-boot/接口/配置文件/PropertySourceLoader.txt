@@ -1,0 +1,60 @@
+文章来源:
+https://blog.csdn.net/yaomingyang/article/details/109228708
+
+测试项目：rookie-springboot-property
+测试类：com.rookie.bigdata.YamlPropertyBootApplication
+测试类：com.rookie.bigdata.boot.env.TxtPropertySourceLoaderTest
+
+
+
+1   PropertySourceLoader加载properties、yml配置文件源码详解
+    PropertySourceLoader接口实现类用来在项目启动的时候加载properties、xml、yml配置文件，其实现类一共有两个PropertiesPropertySourceLoader、YamlPropertySourceLoader，分别用来加载 properties文件及yml配置文件；
+    PropertiesPropertySourceLoader、YamlPropertySourceLoader两个实现类是通过springboot SPI机制在ConfigFileApplicationListener监听器类中被加载，并通过不同的逻辑加载classpath环境变量及其它配置方式制定地址下的配置文件（本文重点讲解PropertiesPropertySourceLoader实现类的源码分析，YamlPropertySourceLoader加载逻辑类似不在重复讲解）
+2   PropertiesPropertySourceLoader
+    我们先看一下PropertiesPropertySourceLoader加载properties配置文件的实现类源码
+        public class PropertiesPropertySourceLoader implements PropertySourceLoader {
+
+        	private static final String XML_FILE_EXTENSION = ".xml";
+        	//加载程序支持的配置文件格式，默认支持：properties、xml两种；xml配置方式没有用过，本文重点讲解properties配  	 //置文件
+        	@Override
+        	public String[] getFileExtensions() {
+        		return new String[] { "properties", "xml" };
+        	}
+        	/**
+        	* 加载属性源到PropertySource实现方法
+        	* name:配置文件
+        	* resourse:配置文件资源类ClassPathSource
+        	**/
+        	@Override
+        	public List<PropertySource<?>> load(String name, Resource resource) throws IOException {
+        		//加载properties配置文件（或者xml配置文件）配置属性到字典中
+            Map<String, ?> properties = loadProperties(resource);
+        		if (properties.isEmpty()) {
+        			return Collections.emptyList();
+        		}
+            //将配置文件字典类型转换为存储一个PropertySource属性源配置的List列表
+        		return Collections
+        				.singletonList(new OriginTrackedMapPropertySource(name, Collections.unmodifiableMap(properties), true));
+        	}
+
+        	@SuppressWarnings({ "unchecked", "rawtypes" })
+        	private Map<String, ?> loadProperties(Resource resource) throws IOException {
+            //获取文件名，包括后缀，如：application-config.properties
+        		String filename = resource.getFilename();
+            //判定是否是xml文件，如果是就解析xml配置
+        		if (filename != null && filename.endsWith(XML_FILE_EXTENSION)) {
+        			return (Map) PropertiesLoaderUtils.loadProperties(resource);
+        		}
+            //解析properties配置文件，并返回字典类型
+        		return new OriginTrackedPropertiesLoader(resource).load();
+        	}
+
+        }
+    上述代码每次解析一个properties配置文件为字典Map类型；里面有几个类需要详细的说一下Resource、OriginTrackedMapPropertySource、OriginTrackedPropertiesLoader
+    2.1 Resource
+        Resource接口是InputStreamSource接口的子接口，InputStreamSource接口提供了一个getInputStream方法返回资源的输入流，可以用于读取指定的资源文件；Resource接口继承了InputStreamSource接口的能力并提供了底层资源的实际类型（如：文件或类路径资源）抽象的资源描述符的能力；ClassPathResource是类路径资源Resource接口的实现，使用给定的ClassLoader或给定的Class来加载资源，如果类路劲资源驻留在文件系统中，而不是JAR中的资源，支持解析为File文件，并且支持解析为URL资源
+    2.2 OriginTrackedMapPropertySource
+        OriginTrackedMapPropertySource实现了多个接口和类，先看下PropertySoruce抽象类；PropertySoruce类提供了两个属性name和source,name用来存储资源名（如：applicationConfig: [classpath:/application-redis.properties]），source用来存储属性源的配置信息(如：java.util.Properties、java.util.Map对象)；EnumerablePropertySource抽象类是PropertySource抽象类的一个实现，提供了一个getPropertyNames抽象方法枚举配置文件中的key名称，并且提供了containsProperty方法实现通过调用getPropertyNames枚举方法判定是否包含指定的配置；MapPropertySource类是EnumerablePropertySource抽象类的子类，提供了一个带有两个参数的构造函数（String类型的name，及Map类型的source，并且source不可以为null），对getPropertyNames方法枚举配置字典key方法实现；OriginTrackedMapPropertySource类继承了MapPropertySource类，新增了一个immutable属性（设定资源
+
+3   我们以PropertiesPropertySourceLoader为例来编写我们自己的PropertySourceLoader,即com.rookie.bigdata.springframework.boot.env.TxtPropertySourceLoader
+

@@ -1,3 +1,15 @@
+参考：
+https://blog.csdn.net/weixin_44411039/article/details/132077006
+https://www.cnblogs.com/teach/p/16322420.html
+https://blog.csdn.net/yaomingyang/article/details/105636832
+
+具体可用参考：https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html
+
+测试项目：rookie-springboot-property
+测试类：com.rookie.bigdata.YamlPropertyBootApplication
+
+
+
 1、spring-boot启动的时候加载配置文件流程
     org.springframework.boot.SpringApplication#prepareEnvironment()
     --->org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationEnvironmentPreparedEvent()
@@ -15,11 +27,15 @@
     EnvironmentPostProcessorApplicationListener能够监听是因为在spring.factories文件中配置了该监听器
 
 
+    1.1 YamlPropertySourceLoader
+        YamlPropertySourceLoader的用法具体可以参考PropertySourceLoader.txt
+    1.2 StandardConfigDataLoader
+
 2、自定义applicaton.txt
     我们观察application.properties和application.yml文件的处理类分别为PropertiesPropertySourceLoader和YamlPropertySourceLoader,所以我们也可以仿照PropertiesPropertySourceLoader写一个自己的实现类TxtPropertySourceLoader,并在classpath:路径下添加application.txt和META-INF/spring.factories文件，其中META-INF/spring.factories文件添加如下：
     # PropertySource Loaders
     org.springframework.boot.env.PropertySourceLoader=\
-    com.rookie.bigdata.boot.env.TxtPropertySourceLoader
+    com.rookie.bigdata.springframework.env.TxtPropertySourceLoader
     我们在TxtPropertySourceLoaderTest进行测试，发现 成功了，这就是我们自定义applicaton.txt的原理
 
 3、spring.profiles.active=dev的理解
@@ -68,11 +84,7 @@
     classpath:/
 
 
-参考：https://blog.csdn.net/weixin_44411039/article/details/132077006
-https://www.cnblogs.com/teach/p/16322420.html
-https://blog.csdn.net/yaomingyang/article/details/105636832
 
-具体可用参考：https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html
 
 
 

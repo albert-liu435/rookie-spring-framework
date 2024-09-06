@@ -1,4 +1,4 @@
-package com.rookie.bigdata.boot.env;
+package com.rookie.bigdata.springframework.boot.env;
 
 
 import org.springframework.boot.env.PropertiesPropertySourceLoader;
@@ -7,7 +7,6 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-
 import java.util.List;
 
 

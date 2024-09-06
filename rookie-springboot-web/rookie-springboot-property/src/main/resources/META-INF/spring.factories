@@ -1,7 +1,19 @@
 # PropertySource Loaders
 org.springframework.boot.env.PropertySourceLoader=\
-com.rookie.bigdata.boot.env.TxtPropertySourceLoader
+com.rookie.bigdata.springframework.boot.env.TxtPropertySourceLoader
 
+## Spring Boot BootstrapRegistryInitializers
+#org.springframework.boot.BootstrapRegistryInitializer=\
+#com.rookie.bigdata.springframework.boot.CustomerBootstrapRegistryInitializer
 
-#org.springframework.boot.env.PropertiesPropertySourceLoader
-#org.springframework.boot.env.YamlPropertySourceLoader
+# ConfigData Loaders
+org.springframework.boot.context.config.ConfigDataLoader=\
+com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoader
+
+## Run Listeners
+#org.springframework.boot.SpringApplicationRunListener=\
+#com.rookie.bigdata.springframework.boot.context.event.CustomerSpringApplicationRunListener
+#
+## Application Context Initializers
+#org.springframework.context.ApplicationContextInitializer=\
+#com.rookie.bigdata.springframework.context.CustomerApplicationContextInitializer

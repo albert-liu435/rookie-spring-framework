@@ -1,16 +1,17 @@
-package com.rookie.bigdata.beans.factory.annotation;
-
+package com.rookie.bigdata.springframework.beans.factory.annotation;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @Class ValueServiceTest
  * @Description
  * @Author rookie
- * @Date 2024/8/21 9:55
+ * @Date 2024/9/6 14:47
  * @Version 1.0
  */
 @SpringBootTest
