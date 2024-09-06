@@ -22,9 +22,9 @@ public class CustomerConfigDataLoader implements ConfigDataLoader<CustomerConfig
     @Override
     public ConfigData load(ConfigDataLoaderContext context, CustomerConfigDataResource resource) throws IOException, ConfigDataResourceNotFoundException {
 
-        ConfigurableBootstrapContext bootstrapContext = context.getBootstrapContext();
-        Student student = bootstrapContext.get(Student.class);
-        log.info("student:{}",student.toString());
+//        ConfigurableBootstrapContext bootstrapContext = context.getBootstrapContext();
+//        Student student = bootstrapContext.get(Student.class);
+//        log.info("student:{}",student.toString());
 
 
         return null;

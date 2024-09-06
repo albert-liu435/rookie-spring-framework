@@ -9,6 +9,10 @@ com.rookie.bigdata.springframework.boot.env.TxtPropertySourceLoader
 # ConfigData Loaders
 org.springframework.boot.context.config.ConfigDataLoader=\
 com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoader
+# ConfigData Location Resolvers
+org.springframework.boot.context.config.ConfigDataLocationResolver=\
+com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLocationResolver
+
 
 ## Run Listeners
 #org.springframework.boot.SpringApplicationRunListener=\

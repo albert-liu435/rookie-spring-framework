@@ -1,0 +1,172 @@
+参考：
+https://www.cnblogs.com/coderacademy/p/18023165
+https://juejin.cn/post/7350140783549710347
+https://juejin.cn/post/7366532063342198822
+https://blog.csdn.net/weixin_44411039/article/details/132077006
+https://www.cnblogs.com/teach/p/16322420.html
+https://blog.csdn.net/yaomingyang/article/details/105636832
+
+具体可用参考：https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html
+
+测试项目：rookie-springboot-property
+测试类：com.rookie.bigdata.YamlPropertyBootApplication
+
+
+1、spring-boot启动的时候加载配置文件流程
+    1.1 在SpringBootApplication执行run方法后，获取程序中的事件监听器后，执行prepareEnvironment方法开始准备环境。
+    org.springframework.boot.SpringApplication#prepareEnvironment()
+    1.2 通知注册的监听器，应用程序的环境已经准备好。
+    --->org.springframework.boot.SpringApplicationRunListeners#environmentPrepared()
+        1.3 doWithListeners 遍历注册的监听器，对每个监听器执行 environmentPrepared 操作，通知它们应用程序的环境已经准备好。
+        --->org.springframework.boot.SpringApplicationRunListeners#doWithListeners()
+            1.4 处理应用事件的组件SimpleApplicationEventMulticaster
+            --->org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationEvent()
+                --->org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationEnvironmentPreparedEvent()
+                    --->org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor#postProcessEnvironment()
+                        1.5 配置文件加载解析
+                        --->org.springframework.boot.context.config.ConfigDataEnvironment#processAndApply()
+                            --->org.springframework.boot.context.config.ConfigDataEnvironment#processInitial()
+                                --->org.springframework.boot.context.config.ConfigDataEnvironmentContributors#withProcessedImports()
+                                    --->org.springframework.boot.context.config.ConfigDataEnvironmentContributors#withProcessedImports()
+                                        --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                                            --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                                                -->org.springframework.boot.context.config.ConfigDataImporter#load()
+                                                    --->org.springframework.boot.context.config.ConfigDataLoaders#load()
+                                                        --->org.springframework.boot.context.config.StandardConfigDataLoader#load()
+                                                            --->org.springframework.boot.env.YamlPropertySourceLoader#load()
+    EnvironmentPostProcessorApplicationListener能够监听是因为在spring.factories文件中配置了该监听器
+
+    加载流程图:./pic加载配置文件.png
+    1.1 在SpringBootApplication执行run方法后，获取程序中的事件监听器后，执行prepareEnvironment方法开始准备环境。
+    1.2 通知注册的监听器，应用程序的环境已经准备好。
+        listeners.environmentPrepared(bootstrapContext, environment)
+    1.3 doWithListeners 遍历注册的监听器，对每个监听器执行 environmentPrepared 操作，通知它们应用程序的环境已经准备好。
+    1.4 处理应用事件的组件SimpleApplicationEventMulticaster开始执行multicastEvent去广播环境准备事件ApplicationEnvironmentPreparedEvent给注册的监听器，环境已经准备好，让他们可以执行环境准备阶段的自定义逻辑。
+        至此，应用程序环境已经准备好的事件已经广播出去，接下来EnvironmentPostProcessorApplicationListener监听器监听到事件后就可以开始处理读取配置文件的逻辑。
+        1.4.1   EnvironmentPostProcessorApplicationListener监听到ApplicationEnvironmentPreparedEvent即环境已经准备好的事件，开始处理执行实现 EnvironmentPostProcessor类的postProcessEnvironment方法。
+            而注册EnvironmentPostProcessor 实现类的有6个。都是加载类路径下的META-INF/spring.factories 文件中配置的EnvironmentPostProcessor实现类。
+                # Environment Post Processors
+                org.springframework.boot.env.EnvironmentPostProcessor=\
+                org.springframework.boot.cloud.CloudFoundryVcapEnvironmentPostProcessor,\
+                org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor,\
+                org.springframework.boot.env.RandomValuePropertySourceEnvironmentPostProcessor,\
+                org.springframework.boot.env.SpringApplicationJsonEnvironmentPostProcessor,\
+                org.springframework.boot.env.SystemEnvironmentPropertySourceEnvironmentPostProcessor,\
+                org.springframework.boot.reactor.ReactorEnvironmentPostProcessor
+            而ConfigDataEnvironmentPostProcessor就是用于处理加载配置文件的实现类。同时这里也是SpringBoot2.4.0前后版本关于加载配置文件差异的一个地方。
+        1.4.2   ConfigDataEnvironmentPostProcessor开始执行postProcessEnvironment方法，创建ConfigDataEnvironment实例，然后执行其processAndApply
+                ConfigDataEnvironment类在SpringBoot2.4.0版本引入，它是SpringBoot配置数据加载和管理的核心组件。它负责从多个源加载、解析和处理配置数据，并将这些数据整合到应用环境中。在这里主要去创建ConfigDataLocationResolvers，ConfigDataLoaders以及ConfigDataEnvironmentContributors。
+        1.4.3   ConfigDataLocationResolvers在SpringBoot2.4.0版本中引入，是负责解析和定位配置数据源位置的一个组件集合。是一个工厂类，用于创建配置数据位置解析器的实例，它包含了一组ConfigDataLocationResolver的实现类，目前只有两个实现类：StandardConfigDataLocationResolver以及ConfigTreeConfigDataLocationResolver。
+            其中ConfigTreeConfigDataLocationResolver主要用于解析Config Tree 类型的配置数据位置。Config Tree是SpringBoot2.4.0引入的一种配置数据存储格式，可以将配置文件以树形结构组织，使得配置文件之间的关系更加清晰。
+            而StandardConfigDataLocationResolver它用于解析标准的配置数据位置，即 SpringBoot2.4之前版本中使用的传统配置文件存放方式。这种方式通常是将配置文件放在类路径下的config目录中，或者在文件系统的特定位置，例如我们常写的applicaiton.properties或者applicaiton.yml。这个类也是本文用于加载配置文件的解析器。
+        1.4.4   ConfigDataLoaders是SpringBoot中处理配置数据加载的组件，也是SpringBoot2.4.0引入。它是一个工厂类，用于创建配置数据加载器的实例，配置数据加载器均实现ConfigDataLoader接口。在SpringBoot中，配置数据加载器负责实际加载配置数据，将配置文件的内容解析成应用程序可用的配置信息。同样的他也只有两个实现类：ConfigTreeConfigDataLoader和StandardConfigDataLoader。
+            同解析器，ConfigTreeConfigDataLoader主要用于加载Config Tree类型的配置数据。而StandardConfigDataLoader 用于加载标准的配置数据。
+        1.4.5   ConfigDataEnvironmentContributors是SpringBoot中用于管理配置数据环境贡献者的组件。它的主要作用是维护一组贡献者，这些贡献者负责提供配置数据的加载、处理和管理。同样也是SpringBoot 2.4.0之后引入。它从特定的源     或根据特定规则加载并解析配置数据，然后将解析后的结果（通常是以PropertySource形式）添加到ConfigDataEnvironment对象中。并且负责按照预定义的顺序和优先级策略来加载和合并不同来源的配置信息，确保正确地覆盖和合并属性值。不同的ConfigDataEnvironmentContributor可以响应不同的环境变量、系统属性或激活的profile，从而动态地调整加载哪些配置数据。
+            此时他的工作是获取与给定源相关联的Binder，用于对配置数据进行绑定操作。执行getInitialImportContributors(binder)方法获取初始导入的配置数据贡献者，加入到贡献者列表中。
+            这个方法就很重要了，这里就是SpringBoot加载的文件的默认位置以及加载文件的顺序。执行第1个方法时，可以通过IMPORT_PROPERTY即spring.config.import这个值可以指定要导入的额外配置数据位置，这些位置将会在配置数据加载时被导入。SpringBoot将会使用该属性指定的位置作为主要的配置数据来源，并将其导入到应用程序的配置中。这个属性通常用于指定一个主要的配置文件，覆盖默认的配置文件位置。它的优先级也是最高的。例如：
+                spring.config.import=classpath:/imported-config/application.yml
+            执行第2个方法即绑定ADDITIONAL_LOCATION_PROPERTY指定的目录spring.config.additional-location，这个目录用于指定额外的配置数据导入位置。指定的额外导入位置会在主要位置之外被考虑。这个属性用于添加额外的配置数据位置，可以与主要位置一起使用，而不是替代它。
+
+            然后就是第3个方法，绑定LOCATION_PROPERTY指定的目录spring.config.location。该目录作为主要的配置数据位置。可以通过设置该属性来指定主要的配置数据位置，这个位置会被优先考虑，覆盖默认的位置。而默认位置有如下：
+                optional:classpath:/
+                optional:classpath:/config/
+                optional:file:./
+                optional:file:./config/
+                optional:file:./config/*/
+            其中optional代表可选的配置文件位置。由上述addInitialImportContributors可以看出默认配置文件加载顺序是从上到下优先级越来越高。即加载顺序为：
+                file:./
+                file:./config/
+                file:./config/*/
+                classpath:/
+                classpath:/config/
+            这里注意这个是加载文件的顺序，而不是加载读取配置的顺序。加载读取配置的顺序请往下看
+                其中file:./、file:./config/、file:./config/*/**都是在文件系统中搜索配置文件，这种方式适用于需要在文件系统上动态配置文件的场景，其中 * 可以匹配任意子目录。
+                而classpath:/、classpath:/config/则表示在类路径（classpath）下搜索配置文件，包括根路径和 /config/子路径。这种方式适用于将配置文件打包在应用程序的 JAR 文件中或者放在类路径下的config目录中。
+
+                Contributors翻译为贡献者，类似给配置数据环境提供数据的加载，处理和管理的。
+
+                到这里ConfigDataEnvironment中关于加载和解析配置文件的部分就准备好了，接下来就开始执行processAndApply方法开始加载解析文件。
+    1.5 配置文件加载解析
+        1.5.1   创建配置文件导入器ConfigDataImporter,将ConfigDataEnvironment中的加载器以及解析器都放入导入器中。
+        1.5.2   执行processInitial方法，然后配置数据贡献者ConfigDataEnvironmentContributors开始执行withProcessedImports方法开始执行加载以及解析配置文件。循环配置数据贡献者直至拿到所有的配置文件。
+        1.5.3   执行创建ConfigDataLocationResolverContext解析器上下文，ConfigDataLoaderContext加载器上下文，以及获取贡献者中配置文件的配置。
+        1.5.4   配置文件导入器执行resolveAndLoad方法开始执行解析和加载数据。这方法中分为resolve解析以及load加载数据。
+        1.5.5   resolve会调用ConfigDataEnvironment中创建的解析器，比如：StandardConfigDataLocationResolver，然后去解析ConfigDataEnvironmentContributor中保存的配置文件的路径。StandardConfigDataLocationResolver会先把路径拿出来按照;进行拆分
+                （方法在ConfigDataLocation中），然后组装每个路径下的文件位置信息，对于文件名默认都为application，对于文件类型，需要使用到PropertySourceLoader他有两个子类：YamlPropertySourceLoader和PropertiesPropertySourceLoader，通过getFileExtensions方法获取文件类型。其中PropertiesPropertySourceLoader对应properties和xml，而YamlPropertySourceLoader对应yml以及yaml
+                这样就可以用ConfigDataLocation路径+applicaiton+getFileExtensions得到一组文件路径。
+                然后解析器会检查这些文件是否存在，如果不存在的则会过滤掉。
+                最后将找到的文件放入StandardConfigDataResource集合中返回，由load方法去加载数据。
+        1.5.6   load方法将resolve方法解析出来的文件路径,有对应的加载器去文件中将数据取出来。
+                这里需要注意的是，读取文件是从最后一个开始读取，即跟文件加载顺序相反，所以配置优先级顺序由高到底为：
+                    file:./config/*/
+                    file:./config/
+                    file:./
+                    classpath:/config/
+                    classpath:/
+                此时的loaders.load即在ConfigDataEnvironment中创建的加载器，本文中使用StandardConfigDataLoader进行加载，然后在配置加载器中由文件类型对应的加载器进行数据加载。
+                将读取的数据封装到ConfigData当中返回。最后将数据组装到ConfigDataEnvironmentContributors中，最后把数据放入当前应用环境中。这样SpringBoot启动时读取文件的流程就结束了。当然后面还有按照当前指定环境profiles读取，但读取流程一致。只要是配置的优先级
+
+
+
+
+
+    1.1 YamlPropertySourceLoader
+        YamlPropertySourceLoader的用法具体可以参考PropertySourceLoader.txt
+    1.2 StandardConfigDataLoader
+
+2、自定义applicaton.txt
+    我们观察application.properties和application.yml文件的处理类分别为PropertiesPropertySourceLoader和YamlPropertySourceLoader,所以我们也可以仿照PropertiesPropertySourceLoader写一个自己的实现类TxtPropertySourceLoader,并在classpath:路径下添加application.txt和META-INF/spring.factories文件，其中META-INF/spring.factories文件添加如下：
+    # PropertySource Loaders
+    org.springframework.boot.env.PropertySourceLoader=\
+    com.rookie.bigdata.springframework.env.TxtPropertySourceLoader
+    我们在TxtPropertySourceLoaderTest进行测试，发现 成功了，这就是我们自定义applicaton.txt的原理
+
+3、spring.profiles.active=dev的理解
+    当设置spring.profiles.active=dev的时候，会将该属性设置到Profiles对象上面，后面加载配置文件的时候，会通过该方法org.springframework.boot.context.config.ConfigDataEnvironment#processAndApply()进行加载，对于spring.profiles.active=dev的理解，如下
+	void processAndApply() {
+		ConfigDataImporter importer = new ConfigDataImporter(this.logFactory, this.notFoundAction, this.resolvers,
+				this.loaders);
+		registerBootstrapBinder(this.contributors, null, DENY_INACTIVE_BINDING);
+		ConfigDataEnvironmentContributors contributors = processInitial(this.contributors, importer);
+		ConfigDataActivationContext activationContext = createActivationContext(
+				contributors.getBinder(null, BinderOption.FAIL_ON_BIND_TO_INACTIVE_SOURCE));
+				//加载不包含dev的配置文件，如 application.properties
+		contributors = processWithoutProfiles(contributors, importer, activationContext);
+		//解析Profiles
+		activationContext = withProfiles(contributors, activationContext);
+		//加载包含dev的配置文件，如 application-dev.properties
+		contributors = processWithProfiles(contributors, importer, activationContext);
+		applyToEnvironment(contributors, activationContext, importer.getLoadedLocations(),
+				importer.getOptionalLocations());
+	}
+
+    application-dev.properties的加载过程主要如下：
+        org.springframework.boot.context.config.ConfigDataEnvironmentContributors#withProcessedImports()
+            --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                --->org.springframework.boot.context.config.ConfigDataLocationResolvers#resolve()
+                    --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#resolveProfileSpecific()
+
+
+
+4、spring.config.name的理解
+    spring.config.name配置信息可用参考StandardConfigDataLocationResolver类，里面有一个getConfigNames()方法，也就是获取spring.config.name的配置，如果为空则默认使用application，这个就是项目启动时要加载的配置文件,所以我们可用根据这个配置项来更改项目启动时加载的配置文件信息。如:在启动jar包的时候 用如下命令：java -jar myproject.jar --spring.config.name=myproject, 我们为了测试方便，直接在idea中进行设置，参考pic/1724203030399.png
+
+5、spring.config.location与spring.config.additional-location
+    spring.config.location与上面的spring.config.name配置方式时一致的,用于指定配置文件替代springboot中的默认配置文件
+    --spring.config.location=classpath:/pro/a.yml
+    同理spring.config.additional-location与spring.config.name的配置方式一致，spring.config.additional-location用于添加额外的配置文件，
+    --spring.config.additional-location=classpath:/pro/a.yml
+
+5、配置文件的优先级与加载顺序
+    系统默认加载配置文件的顺序是classpath:/,classpath:/config,file:./,file:./config，配置文件的优先级恰好相反。当使用spring.config.location指定配置文件时将会替换掉以上默认位置的配置；例如，如果spring.config.location的配置是classpath:/custom-config/,file:./custom-config/，那么优先级顺序。1、file:./custom-config/ 2、classpath:/custom-config/。pring.config.additional-location指定配置文件，该属性是用来指定默认配置之外的位置的配置文件，系统会有限使用指定的外部配置；例如，如果指定的配置是classpath:/custom-config/,file:./custom-config/，那么优先级顺序将会是
+    file:./custom-config/
+    classpath:custom-config/
+    file:./config/
+    file:./
+    classpath:/config/
+    classpath:/
+
+
+
+
+

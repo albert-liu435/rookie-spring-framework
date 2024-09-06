@@ -1,0 +1,8 @@
+文章参考：
+https://blog.csdn.net/u013887008/article/details/129313240
+
+
+
+PropertySourceLoader的方式可以进行文件加载，那么ConfigDataLoader也可以进行自定义的文件加载
+我们参考StandardConfigDataLoader的方式进行编写自己的文件加载方式
+
