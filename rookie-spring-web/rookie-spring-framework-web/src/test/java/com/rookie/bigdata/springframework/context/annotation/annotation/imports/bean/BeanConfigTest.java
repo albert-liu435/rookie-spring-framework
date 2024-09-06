@@ -1,17 +1,19 @@
-package com.rookie.bigdata.springframework.context.annotation.imports.config;
+package com.rookie.bigdata.springframework.context.annotation.annotation.imports.bean;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class BeanConfigTest
- * @Description
+ * @Description 
  * @Author rookie
- * @Date 2024/6/28 9:30
+ * @Date 2024/9/6 11:55
  * @Version 1.0
  */
 class BeanConfigTest {
+
     @Test
     void test01() {
         //加载配置类
@@ -27,4 +29,5 @@ class BeanConfigTest {
 
 
     }
+
 }

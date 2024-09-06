@@ -1,0 +1,34 @@
+参考文档：
+https://blog.csdn.net/weixin_43521890/article/details/122075847
+
+https://www.cnblogs.com/jelly12345/p/15568061.html
+
+
+
+1   Import快速导入Bean案例
+
+    测试项目：rookie-spring-framework-web
+    测试类:com.rookie.bigdata.springframework.context.annotation.annotation.imports.bean.BeanConfigTest
+
+
+    1.1 调用链路
+    org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions
+        -->org.springframework.context.annotation.ConfigurationClassPostProcessor#parse
+            -->org.springframework.context.annotation.ConfigurationClassParser#processConfigurationClass
+                -->org.springframework.context.annotation.ConfigurationClassParser#doProcessConfigurationClass
+    1.2 主要看ConfigurationClassParser#doProcessConfigurationClass()方法
+        1.2.1   首先调用getImports()方法获取Imports的值，即里面的class
+        1.2.1   调用processImports()方法进行处理，里面会进行判断最终调用processConfigurationClass()方法，将Import注解中的类放入到configurationClasses集合中，后续会通过该集合实例化Bean
+
+
+
+
+
+调用链路:ConfigurationClassParser#processConfigBeanDefinitions ->ConfigurationClassParser#getImports
+
+@Import({MyImportSelector.class}) 调用方法在 org.springframework.context.annotation.ConfigurationClassParser.processImports 中有if (candidate.isAssignable(ImportSelector.class)) 判断逻辑
+
+
+@Import({MyImportBeanDefinitionRegistrar.class})执行流程
+org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions--》org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForConfigurationClass--》org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsFromRegistrars--》org.springframework.context.annotation.ImportBeanDefinitionRegistrar#registerBeanDefinitions
+
