@@ -1,23 +1,23 @@
-package com.rookie.bigdata.springframework.context.annotation.imports.registrar;
+package com.rookie.bigdata.springframework.context.annotation.imports.bean;
 
-import com.rookie.bigdata.springframework.context.annotation.imports.config.BeanConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @Class BeanDefinitionRegistrarConfigTest
+ * @Class BeanConfigTest
  * @Description
  * @Author rookie
- * @Date 2024/6/28 11:09
+ * @Date 2024/9/6 13:56
  * @Version 1.0
  */
-class BeanDefinitionRegistrarConfigTest {
+class BeanConfigTest {
 
     @Test
     void test01() {
         //加载配置类
-        AnnotationConfigApplicationContext annotationConfigApplicationContext = new AnnotationConfigApplicationContext(BeanDefinitionRegistrarConfig.class);
+        AnnotationConfigApplicationContext annotationConfigApplicationContext = new AnnotationConfigApplicationContext(BeanConfig.class);
 
         //获取成功注册到容器中的所有Bean的名称
         String[] beanDefinitionNames = annotationConfigApplicationContext.getBeanDefinitionNames();
@@ -29,4 +29,6 @@ class BeanDefinitionRegistrarConfigTest {
 
 
     }
+
+
 }

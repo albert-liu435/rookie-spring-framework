@@ -1,8 +1,7 @@
-package com.rookie.bigdata.springframework.context.annotation.aware.importaware.config;
+package com.rookie.bigdata.springframework.context.annotation.importaware.config;
 
-import com.rookie.bigdata.springframework.context.annotation.aware.importaware.annotation.EnableXcs;
+import com.rookie.bigdata.springframework.context.annotation.importaware.annotation.EnableXcs;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
  * @Class MyConfiguration

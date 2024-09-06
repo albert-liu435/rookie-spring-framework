@@ -1,6 +1,6 @@
-package com.rookie.bigdata.springframework.context.annotation.aware.importaware.annotation;
+package com.rookie.bigdata.springframework.context.annotation.importaware.annotation;
 
-import com.rookie.bigdata.springframework.context.annotation.aware.importaware.config.MyImportAware;
+import com.rookie.bigdata.springframework.context.annotation.importaware.config.MyImportAware;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;

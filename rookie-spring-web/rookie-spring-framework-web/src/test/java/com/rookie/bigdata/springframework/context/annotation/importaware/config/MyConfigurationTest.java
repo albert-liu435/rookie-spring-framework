@@ -1,4 +1,4 @@
-package com.rookie.bigdata.springframework.context.annotation.aware.importaware.config;
+package com.rookie.bigdata.springframework.context.annotation.importaware.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -7,15 +7,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @Class MyImportAwareTest
+ * @Class MyConfigurationTest
  * @Description
  * @Author rookie
- * @Date 2024/7/9 9:29
+ * @Date 2024/9/6 14:11
  * @Version 1.0
  */
 @Slf4j
-class MyImportAwareTest {
-
+class MyConfigurationTest {
     @Test
     void setImportMetadata() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(MyConfiguration.class);

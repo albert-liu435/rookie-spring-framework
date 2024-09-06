@@ -8,7 +8,7 @@ https://www.cnblogs.com/jelly12345/p/15568061.html
 1   Import快速导入Bean案例
 
     测试项目：rookie-spring-framework-web
-    测试类:com.rookie.bigdata.springframework.context.annotation.annotation.imports.bean.BeanConfigTest
+    测试类:com.rookie.bigdata.springframework.context.annotation.imports.bean.BeanConfigTest
 
 
     1.1 调用链路
@@ -20,7 +20,37 @@ https://www.cnblogs.com/jelly12345/p/15568061.html
         1.2.1   首先调用getImports()方法获取Imports的值，即里面的class
         1.2.1   调用processImports()方法进行处理，里面会进行判断最终调用processConfigurationClass()方法，将Import注解中的类放入到configurationClasses集合中，后续会通过该集合实例化Bean
 
+2   使用接口ImportSelector的实现类作为注解@Import的参数
+    测试项目：rookie-spring-framework-web
+    测试类:com.rookie.bigdata.springframework.context.annotation.imports.selectors.ImportSelectorConfigTest
+    2.1 调用链路
+    org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions
+        -->org.springframework.context.annotation.ConfigurationClassPostProcessor#parse
+            -->org.springframework.context.annotation.ConfigurationClassParser#processConfigurationClass
+                -->org.springframework.context.annotation.ConfigurationClassParser#doProcessConfigurationClass
+                    -->org.springframework.context.annotation.ConfigurationClassParser#processImports
+    2.2  主要由 org.springframework.context.annotation.ConfigurationClassParser#processImports该方法处理
+        主要处理逻辑
+            					if (candidate.isAssignable(ImportSelector.class)) {
+            						// Candidate class is an ImportSelector -> delegate to it to determine imports
+            						Class<?> candidateClass = candidate.loadClass();
+            						ImportSelector selector = ParserStrategyUtils.instantiateClass(candidateClass, ImportSelector.class,
+            								this.environment, this.resourceLoader, this.registry);
+            						Predicate<String> selectorFilter = selector.getExclusionFilter();
+            						if (selectorFilter != null) {
+            							exclusionFilter = exclusionFilter.or(selectorFilter);
+            						}
+            						if (selector instanceof DeferredImportSelector deferredImportSelector) {
+            							this.deferredImportSelectorHandler.handle(configClass, deferredImportSelector);
+            						}
+            						else {
+            							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
+            							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames, exclusionFilter);
+            							processImports(configClass, currentSourceClass, importSourceClasses, exclusionFilter, false);
+            						}
+            					}
 
+3   使用接口ImportBeanDefinitionRegistrar的实现类作为注解@Import的参数
 
 
 

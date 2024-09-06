@@ -10,7 +10,7 @@ import org.springframework.core.type.AnnotationMetadata;
  * @Date 2024/6/28 10:56
  * @Version 1.0
  */
-public class MyImportSelector implements ImportSelector {
+public class CustomerImportSelector implements ImportSelector {
 
     /**
      * 该方法返回值不可以返回null，否则会报错

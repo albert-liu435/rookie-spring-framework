@@ -1,4 +1,4 @@
-package com.rookie.bigdata.springframework.context.annotation.annotation.imports.bean;
+package com.rookie.bigdata.springframework.context.annotation.imports.bean;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;

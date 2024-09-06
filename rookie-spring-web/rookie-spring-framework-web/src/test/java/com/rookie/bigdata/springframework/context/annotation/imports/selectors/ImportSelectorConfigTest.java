@@ -1,6 +1,5 @@
 package com.rookie.bigdata.springframework.context.annotation.imports.selectors;
 
-import com.rookie.bigdata.springframework.context.annotation.imports.config.BeanConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -10,10 +9,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * @Class ImportSelectorConfigTest
  * @Description
  * @Author rookie
- * @Date 2024/6/28 10:58
+ * @Date 2024/9/6 13:59
  * @Version 1.0
  */
 class ImportSelectorConfigTest {
+
     @Test
     void test01() {
         //加载配置类
@@ -29,4 +29,6 @@ class ImportSelectorConfigTest {
 
 
     }
+
+
 }

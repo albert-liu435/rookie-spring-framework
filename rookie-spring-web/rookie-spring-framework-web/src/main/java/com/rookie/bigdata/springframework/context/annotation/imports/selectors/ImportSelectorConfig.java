@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Import;
  * @Date 2024/6/28 10:58
  * @Version 1.0
  */
-@Import({MyImportSelector.class})
+@Import({CustomerImportSelector.class})
 @Configuration
 public class ImportSelectorConfig {
 }
