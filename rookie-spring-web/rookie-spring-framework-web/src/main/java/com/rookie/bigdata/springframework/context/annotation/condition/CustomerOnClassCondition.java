@@ -5,19 +5,21 @@ import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
- * @Class MyOnClassCondition
+ * @Class CustomerOnClassCondition
  * @Description
  * @Author rookie
- * @Date 2024/7/9 10:39
+ * @Date 2024/9/6 10:47
  * @Version 1.0
  */
-public class MyOnClassCondition implements Condition {
+public class CustomerOnClassCondition implements Condition {
+
 
     private final String className;
 
-    public MyOnClassCondition(String className) {
+    public CustomerOnClassCondition(String className) {
         this.className = className;
     }
+
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {

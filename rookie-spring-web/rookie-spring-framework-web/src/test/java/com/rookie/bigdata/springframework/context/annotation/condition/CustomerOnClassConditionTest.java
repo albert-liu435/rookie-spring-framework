@@ -10,13 +10,13 @@ import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @Class MyOnClassConditionTest
+ * @Class CustomerOnClassConditionTest
  * @Description https://github.com/xuchengsheng/spring-reading/blob/master/spring-metadata/spring-metadata-condition/README.md
  * @Author rookie
- * @Date 2024/7/9 10:39
+ * @Date 2024/9/6 11:32
  * @Version 1.0
  */
-class MyOnClassConditionTest {
+class CustomerOnClassConditionTest {
 
     @Test
     void test01()throws Exception{
@@ -30,7 +30,7 @@ class MyOnClassConditionTest {
         Resource[] resources = resolver.getResources("classpath*:com/rookie/bigdata/springframework/context/annotation/condition/**/*.class");
 
         // 创建自定义条件类的实例，用于条件匹配
-        Condition condition = new MyOnClassCondition("com.rookie.bigdata.springframework.context.annotation.condition.MyOnClassConditionTest1");
+        Condition condition = new CustomerOnClassCondition("com.rookie.bigdata.springframework.context.annotation.condition.CustomerOnClassConditionTest1");
 
         // 遍历每个资源，判断是否满足自定义条件
         for (Resource resource : resources) {

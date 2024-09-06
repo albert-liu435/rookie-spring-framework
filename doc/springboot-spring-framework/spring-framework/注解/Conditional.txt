@@ -1,0 +1,19 @@
+参考文档：
+https://juejin.cn/post/6844904200401321997
+
+测试：
+测试项目:rookie-spring-framework-web
+测试类:com.rookie.bigdata.springframework.context.annotation.conditional.SystemBeanConfigTest
+
+
+
+在实例化Bean的时候，会进行判断，执行流程为
+org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions
+    -->org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForConfigurationClass
+        -->org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForBeanMethod
+            -->org.springframework.context.annotation.ConditionEvaluator#shouldSkip
+
+具体看org.springframework.context.annotation.ConditionEvaluator#shouldSkip()方法的执行流程
+    1、判断该AnnotatedTypeMetadata元数据是否含有Conditional注解，没有的话就返回false
+    2、获取Conditional注解上面的value值，然后进行遍历并实例化Condition接口的实现类，即Conditional注解上面的类
+    3、进行遍历Condition的实现类，然后调用match()方法，判断是否满足条件，最终返回boolean值来决定该Bean是否需要实例化

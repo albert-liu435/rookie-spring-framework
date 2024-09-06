@@ -5,11 +5,13 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * @Class SystemBeanConfigTest
+ * @Description 
  * @Author rookie
- * @Description
- * @Date 2024/7/1 20:54
+ * @Date 2024/9/6 11:37
  * @Version 1.0
  */
 class SystemBeanConfigTest {
@@ -40,5 +42,3 @@ class SystemBeanConfigTest {
     }
 
 }
-
-

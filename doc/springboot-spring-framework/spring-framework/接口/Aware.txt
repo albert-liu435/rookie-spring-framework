@@ -1,3 +1,8 @@
+文章来源：
+https://juejin.cn/post/6844903938131509256
+https://juejin.cn/post/7110856807039369246
+https://blog.csdn.net/ww2651071028/article/details/130519309
+
 测试项目：
 rookie-spring-framework-web
 测试类:
@@ -24,7 +29,4 @@ com.rookie.bigdata.springframework.context.aware.AwareAnnoConfigTest
 
 
 
-文章来源：
-https://juejin.cn/post/6844903938131509256
-https://juejin.cn/post/7110856807039369246
-https://blog.csdn.net/ww2651071028/article/details/130519309
+

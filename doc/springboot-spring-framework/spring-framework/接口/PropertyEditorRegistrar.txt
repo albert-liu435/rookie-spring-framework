@@ -1,3 +1,12 @@
+文章来源：
+https://cloud.tencent.com/developer/article/1952804
+https://blog.csdn.net/cuichunchi/article/details/90407632
+https://www.cnblogs.com/warehouse/p/9387668.html
+
+测试项目：
+项目:rookie-spring-framework-web
+测试类包:com.rookie.bigdata.springframework.beans
+
 
 
 一   PropertyEditor作用
@@ -136,8 +145,5 @@
 
 
 
-https://cloud.tencent.com/developer/article/1952804
-https://blog.csdn.net/cuichunchi/article/details/90407632
-https://www.cnblogs.com/warehouse/p/9387668.html
 
 
