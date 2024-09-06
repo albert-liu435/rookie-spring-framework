@@ -7,7 +7,7 @@ import org.springframework.boot.BootstrapRegistryInitializer;
 
 /**
  * @Class CustomerBootstrapRegistryInitializer
- * @Description 参考spring-cloud-alibaba中的ConfigServerBootstrapper
+ * @Description 参考spring-cloud-config-client中的ConfigServerBootstrapper
  * @Author rookie
  * @Date 2024/9/3 17:20
  * @Version 1.0
@@ -28,7 +28,7 @@ public class CustomerBootstrapRegistryInitializer implements BootstrapRegistryIn
         Student student=new Student();
         student.setStudentNo(123);
         student.setName("abc");
-
+        //将student对象放入到BootstrapRegistry,然后在CustomerSpringApplicationRunListener监听器中取出来
         registry.registerIfAbsent(Student.class, BootstrapRegistry.InstanceSupplier.of(student));
 
     }

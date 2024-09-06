@@ -32,6 +32,10 @@ public class CustomerSpringApplicationRunListener implements SpringApplicationRu
 
     @Override
     public void environmentPrepared(ConfigurableBootstrapContext bootstrapContext, ConfigurableEnvironment environment) {
+
+        Student student = bootstrapContext.get(Student.class);
+        log.info("student:{}",student.toString());
+
 //        System.out.println("表示已经开始读取配置文件");
 //        //配置文件到程序，再然后放入springboot容器
 //        Properties properties=new Properties();

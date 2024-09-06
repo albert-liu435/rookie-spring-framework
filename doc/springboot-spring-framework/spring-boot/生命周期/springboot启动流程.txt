@@ -25,16 +25,18 @@ Springboot启动流程
 
 3   加载所有的初始化器
     这里加载的初始化器是springboot自带初始化器，从从 META-INF/spring.factories 配置文件中加载的，那么这个文件在哪呢？自带有2个，分别在源码的jar包的 spring-boot-autoconfigure 项目 和 spring-boot 项目里面各有一个
-     自定义一个BootstrapRegistryInitializer,即CustomerBootstrapRegistryInitializer
-     加载ApplicationContextInitializer，自定义一个ApplicationContextInitializer
+     3.1    BootstrapRegistryInitializer
+            BootstrapRegistryInitializer是从SpringBoot 2.4.5版本添加的类，我们可以自己定义实现该类,比如将一个对象放入到BootstrapRegistry,后面再通过监听器等其他方式取出来.再比如可以在里面实例化RestTemplate,后续可以通过RestTemplate调用nacos获取配置文件等信息，也可以调用其他地方进行配置文件的获取等等。
+     3.2    ApplicationContextInitializer
+            从 META-INF/spring.factories加载所有的初始化器
 4   加载所有的监听器
     加载监听器也是从 META-INF/spring.factories 配置文件中加载的，与初始化不同的是，监听器加载的是实现了 ApplicationListener 接口的类
-    同上面的BootstrapRegistryInitializer和ApplicationContextInitializer的用法类似
+        同上面的BootstrapRegistryInitializer和ApplicationContextInitializer的用法类似
 5   设置程序运行的主类
     deduceMainApplicationClass(); 这个方法仅仅是找到main方法所在的类，为后面的扫包作准备，deduce是推断的意思，所以准确地说，这个方法作用是推断出主方法所在的类；
 6   开启计时器
-    程序运行到这里，就已经进入了run方法的主体了，第一步调用的run方法是静态方法，那个时候还没实例化SpringApplication对象，现在调用的run方法是非静态的，是需要实例化后才可以调用的，进来后首先会开启计时器，这个计时器有什么作用呢？顾名思义就使用来计时的嘛，计算springboot启动花了多长时间
-    创建DefaultBootstrapContext并对BootstrapRegistryInitializer进行实例化
+    6.1 程序运行到这里，就已经进入了run方法的主体了，第一步调用的run方法是静态方法，那个时候还没实例化SpringApplication对象，现在调用的run方法是非静态的，是需要实例化后才可以调用的，进来后首先会开启计时器，这个计时器有什么作用呢？顾名思义就使用来计时的嘛，计算springboot启动花了多长时间
+    6.2 创建DefaultBootstrapContext并调用BootstrapRegistryInitializer的initialize()方法，在initialize()方法中我们可以自定义一下信息并放到DefaultBootstrapContext里面，在后续进行调用prepareEnvironment()方法的时候进行处理
 7   将java.awt.headless设置为true
     这里将java.awt.headless设置为true，表示运行在服务器端，在没有显示器器和鼠标键盘的模式下照样可以工作，模拟输入输出设备功能。
     做了这样的操作后,SpringBoot想干什么呢?其实是想设置该应用程序,即使没有检测到显示器,也允许其启动.对于服务器来说,是不需要显示器的,所以要这样设置.
@@ -47,19 +49,27 @@ Springboot启动流程
     将执行run方法时传入的参数封装成一个对象DefaultApplicationArguments
 10  准备环境变量
     准备环境变量，包含系统属性和用户配置的属性，执行的代码块在 prepareEnvironment 方法内。打了断点之后可以看到，它将maven和系统的环境变量都加载进来了
+    可以参考./配置文件/springboot加载配置文件.txt
 12  打印banner信息
     显而易见，这个流程就是用来打印控制台那个很大的spring的banner的
 13  创建应用上下文
     实例化应用程序的上下文， 调用 createApplicationContext() 方法，这里就是用反射创建对象
+    13.1    对于SERVLET环境来说。这里会创建一个AnnotationConfigServletWebServerApplicationContext对象，跟Spring启动流程中用AnnotationConfigApplicationContext启动类似，但是又有点区别，因为在springboot环境下，会内嵌tomcat的启动
 15  准备上下文环境
     这里准备的上下文环境是为了下一步刷新做准备的，里面还做了一些额外的事情
     如图：./pic/02_上下文.png
-    15.1    实例化单例的beanName生成器
-        在 postProcessApplicationContext(context); 方法里面。使用单例模式创建 了BeanNameGenerator 对象，其实就是beanName生成器，用来生成bean对象的名称
-    15.2    执行初始化方法
-        初始化方法有哪些呢？还记得第3步里面加载的初始化器嘛？其实是执行第3步加载出来的所有初始化器，实现了ApplicationContextInitializer 接口的类
-    15.3    将启动参数注册到容器中
-        这里将启动参数以单例的模式注册到容器中，是为了以后方便拿来使用，参数的beanName 为 ：springApplicationArguments
+    15.1    将ConfigurableEnvironment对象设置到应用上下文ConfigurableApplicationContext中
+    15.2    如果有必要则添加AOT
+    15.3    对ApplicationContextInitializer调用initialize方法
+    15.4    发布spring.boot.application.context-prepared事件和BootstrapContextClosedEvent
+    15.5    将ApplicationArguments和Banner注册到Spring容器中
+
+        15.3    实例化单例的beanName生成器
+            在 postProcessApplicationContext(context); 方法里面。使用单例模式创建 了BeanNameGenerator 对象，其实就是beanName生成器，用来生成bean对象的名称
+        15.4    执行初始化方法
+            初始化方法有哪些呢？还记得第3步里面加载的初始化器嘛？其实是执行第3步加载出来的所有初始化器，实现了ApplicationContextInitializer 接口的类
+        15.5    将启动参数注册到容器中
+            这里将启动参数以单例的模式注册到容器中，是为了以后方便拿来使用，参数的beanName 为 ：springApplicationArguments
 16  刷新上下文
     刷新上下文已经是spring的范畴了，自动装配和启动 tomcat就是在这个方法里面完成的，还有其他的spring自带的机制
     参考图片：./pic/03_refresh.png

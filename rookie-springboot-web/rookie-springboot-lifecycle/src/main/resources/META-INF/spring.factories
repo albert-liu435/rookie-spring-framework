@@ -13,3 +13,7 @@ com.rookie.bigdata.springframework.boot.context.event.CustomerSpringApplicationR
 # Application Context Initializers
 org.springframework.context.ApplicationContextInitializer=\
 com.rookie.bigdata.springframework.context.CustomerApplicationContextInitializer
+
+# Application Listeners
+org.springframework.context.ApplicationListener=\
+com.rookie.bigdata.springframework.context.event.CustomerSmartApplicationListener
