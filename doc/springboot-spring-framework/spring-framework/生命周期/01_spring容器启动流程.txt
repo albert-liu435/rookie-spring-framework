@@ -1,12 +1,16 @@
-我们以com.rookie.bigdata.springframework.context.annotation.configuration.ConfigurationAnnotationConfigTest#testContainer()执行测试类来进行分析
-    @Test
-    void testContainer() {
-        //容器执行流程
-        AnnotationConfigApplicationContext context =
-                new AnnotationConfigApplicationContext(ConfigurationAnnotationConfig.class);
-        ConfigurationAnnotationConfig config = context.getBean(ConfigurationAnnotationConfig.class);
-    }
-项目工程为：rookie-spring-framework-web
+
+参考文章：
+https://www.cnblogs.com/risuschen/p/12820038.html
+
+https://blog.csdn.net/Sheng_Q/article/details/128266642
+
+https://blog.csdn.net/a745233700/article/details/113761271
+
+https://juejin.cn/post/6906637797080170510#comment
+
+测试项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.context.annotation.configuration.ConfigurationAnnotationConfigTest#testContainer()
+
 
 
 
@@ -147,9 +151,9 @@ public void refresh() throws BeansException, IllegalStateException {
 
     BeanPostProcessor、
     DestructionAwareBeanPostProcessor、
-　　InstantiationAwareBeanPostProcessor、
-　　SmartInstantiationAwareBeanPostProcessor、
-　　MergedBeanDefinitionPostProcessor
+    InstantiationAwareBeanPostProcessor、
+    SmartInstantiationAwareBeanPostProcessor、
+    MergedBeanDefinitionPostProcessor
         6.1 获取所有的BeanPostProcessor ；后置处理器都默认可以通过PriorityOrdered、Ordered接口来指定优先级
         6.2 先注册PriorityOrdered优先级接口的BeanPostProcessor把每一个BeanPostProcessor添加到BeanFactory中beanFactory.addBeanPostProcessor(postProcessor)
         6.3 再注册Ordered优先级接口的BeanPostProcessor
@@ -344,12 +348,3 @@ public void refresh() throws BeansException, IllegalStateException {
 
 
 参考启动流程中的图片 ./pic/启动流程
-
-参考文章：
-https://www.cnblogs.com/risuschen/p/12820038.html
-
-https://blog.csdn.net/Sheng_Q/article/details/128266642
-
-https://blog.csdn.net/a745233700/article/details/113761271
-
-https://juejin.cn/post/6906637797080170510#comment

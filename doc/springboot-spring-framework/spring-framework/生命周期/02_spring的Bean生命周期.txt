@@ -1,22 +1,17 @@
+文章来源:
+https://blog.csdn.net/Sheng_Q/article/details/128277691
+https://cloud.tencent.com/developer/article/2216932
+https://segmentfault.com/a/1190000040365130
+https://blog.csdn.net/a745233700/article/details/113840727
+
+
+
 Spring的Bean的生命周期
-项目工程为：rookie-spring-framework-web
 
-测试类:com.rookie.bigdata.springframework.context.lifecycle.UserLifeCycleTest
-我们以下面这段代码来进行分析
-@Slf4j
-class UserLifeCycleTest {
+测试项目：rookie-spring-framework-web
+测试类:com.rookie.bigdata.springframework.context.lifecycle.UserLifeCycleTest.test01()
 
-    @Test
-    void test01() {
-        AbstractApplicationContext context = new ClassPathXmlApplicationContext("springframework/context/lifecycle/lifecycle-spring.xml");
-        final String[] beanDefinitionNames = context.getBeanDefinitionNames();
-        Arrays.stream(beanDefinitionNames).forEach(beanDefinitionName -> log.info("name contains {}.", beanDefinitionName));
 
-        UserLifeCycle userLifeCycle = (UserLifeCycle) context.getBean("userLifeCycle");
-        log.info("UserLifeCycle: {}", userLifeCycle);
-    }
-
-}
 整体流程查看图：./pic/lifecycle/Bean生命周期.png
 Bean的实例化触发时机是在 org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization(beanFactory);也就是在这个方法执行之前需要将Bean的元数据全部都加载到Spring的容器中
 对于上面的实例，加载流程是在org.springframework.context.support.AbstractRefreshableApplicationContext#refreshBeanFactory()中进行的
@@ -155,10 +150,3 @@ org.springframework.context.support.AbstractApplicationContext#refresh()
 
 
 
-
-文章来源:
-https://blog.csdn.net/Sheng_Q/article/details/128277691
-
-https://cloud.tencent.com/developer/article/2216932
-https://segmentfault.com/a/1190000040365130
-https://blog.csdn.net/a745233700/article/details/113840727
