@@ -1,0 +1,22 @@
+文章来源：
+https://www.cnblogs.com/Yinchen-One/p/17645858.html
+https://www.hangge.com/blog/cache/detail_2508.html#google_vignette
+https://blog.csdn.net/goodjava2007/article/details/126356485
+https://blog.csdn.net/OVERLORDLL/article/details/132097192
+
+测试项目：rookie-springboot-lifecycle
+测试类：com.rookie.bigdata.LifeCycleBootApplication
+
+
+Runner接口
+Runner的接口继承接口主要有如下两个：
+ApplicationRunner和CommandLineRunner
+
+执行逻辑为：
+
+org.springframework.boot.SpringApplication#run()
+    --->org.springframework.boot.SpringApplication#callRunners()
+        --->org.springframework.boot.SpringApplication#callRunner()
+
+主要逻辑为：
+从容器中获取类型为Runner类型的Bean名称。然后根据Bean名称获取所有的Bean实例，通过 Bean实例的Order顺序进行排序，排序完成后进行执行run()方法
