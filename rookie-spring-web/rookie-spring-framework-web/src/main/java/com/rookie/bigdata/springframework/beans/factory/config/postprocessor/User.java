@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Class User
@@ -13,10 +14,18 @@ import lombok.RequiredArgsConstructor;
  * @Version 1.0
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-
+//@NoArgsConstructor
+//@AllArgsConstructor
+@Slf4j
 public class User {
 
     private String name;
+
+    public User() {
+    }
+
+    public User(String name) {
+        log.error("构造User对象");
+        this.name = name;
+    }
 }

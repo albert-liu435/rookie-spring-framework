@@ -11,6 +11,7 @@ Spring的Bean的生命周期
 测试项目：rookie-spring-framework-web
 测试类:com.rookie.bigdata.springframework.context.lifecycle.UserLifeCycleTest.test01()
 
+com.rookie.bigdata.springframework.beans.factory.config.postprocessor.PostProcessorConfigTest
 
 整体流程查看图：./pic/lifecycle/Bean生命周期.png
 Bean的实例化触发时机是在 org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization(beanFactory);也就是在这个方法执行之前需要将Bean的元数据全部都加载到Spring的容器中
