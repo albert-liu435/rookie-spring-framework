@@ -1,6 +1,6 @@
-com:
-  rookie:
-    bigdata:
-      spring:
-        config:
-          location: a.yml
+#com:
+#  rookie:
+#    bigdata:
+#      spring:
+#        config:
+#          location: a.yml

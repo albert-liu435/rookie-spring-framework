@@ -1,4 +1,4 @@
-application:
-  yml:
-    dev: dev
-
+#application:
+#  yml:
+#    dev: dev
+#

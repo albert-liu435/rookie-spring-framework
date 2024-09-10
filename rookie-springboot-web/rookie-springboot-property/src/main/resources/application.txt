@@ -1,1 +1,1 @@
-com.rookie.bigdata.txt=txt
+#com.rookie.bigdata.txt=txt

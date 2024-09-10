@@ -1,6 +1,6 @@
-com:
-  rookie:
-    bigdata:
-      spring:
-        config:
-          name: springConfigName
+#com:
+#  rookie:
+#    bigdata:
+#      spring:
+#        config:
+#          name: springConfigName

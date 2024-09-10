@@ -1,4 +1,3 @@
-
 spring:
   profiles:
     active: dev
@@ -10,10 +9,10 @@ server:
   port: 8080
 
 
-com:
-  rookie:
-    bigdata:
-      beans:
-        factory:
-          annotation:
-            value: rookie
+#com:
+#  rookie:
+#    bigdata:
+#      beans:
+#        factory:
+#          annotation:
+#            value: rookie
