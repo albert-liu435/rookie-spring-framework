@@ -1,3 +1,16 @@
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128277784
+
+https://cloud.tencent.com/developer/article/2089244
+https://www.nowcoder.com/discuss/473227892445446144
+https://juejin.cn/post/6974018412158664734
+https://juejin.cn/post/6844903744954433544
+https://cloud.tencent.com/developer/article/1461796
+
+https://blog.csdn.net/M_drm/article/details/106135801
+https://www.xxelin.com/2020/04/23/ProxyFactory-source/
+
+
 本篇所使用的测试类如下
 项目:rookie-spring-framework-web
 测试类：com.rookie.bigdata.springframework.aop.anno.AopDemoConfigurationTest#test01()
@@ -280,17 +293,7 @@ Spring AOP
                 参考图片：./pic/aop/05_aop.png
 
 
-文章来源：
-https://blog.csdn.net/Sheng_Q/article/details/128277784
 
-https://cloud.tencent.com/developer/article/2089244
-https://www.nowcoder.com/discuss/473227892445446144
-https://juejin.cn/post/6974018412158664734
-https://juejin.cn/post/6844903744954433544
-https://cloud.tencent.com/developer/article/1461796
-
-https://blog.csdn.net/M_drm/article/details/106135801
-https://www.xxelin.com/2020/04/23/ProxyFactory-source/
 
 
 
