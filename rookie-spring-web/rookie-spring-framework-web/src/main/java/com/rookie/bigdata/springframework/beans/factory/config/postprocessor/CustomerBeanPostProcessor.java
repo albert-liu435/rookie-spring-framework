@@ -20,7 +20,7 @@ public class CustomerBeanPostProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         if ("buildUser".equals(beanName)) {
-            log.error("030执行BeanPostProcessor#postProcessBeforeInitialization");
+            log.error("040执行BeanPostProcessor#postProcessBeforeInitialization");
         }
 
 
@@ -32,7 +32,7 @@ public class CustomerBeanPostProcessor implements BeanPostProcessor {
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
         if ("buildUser".equals(beanName)) {
-            log.error("031执行BeanPostProcessor#postProcessAfterInitialization");
+            log.error("045执行BeanPostProcessor#postProcessAfterInitialization");
         }
 
         return bean;

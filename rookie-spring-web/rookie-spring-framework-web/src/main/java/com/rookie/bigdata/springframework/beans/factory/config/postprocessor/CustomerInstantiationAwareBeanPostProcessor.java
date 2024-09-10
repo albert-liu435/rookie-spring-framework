@@ -21,7 +21,7 @@ public class CustomerInstantiationAwareBeanPostProcessor implements Instantiatio
     public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
 
         if("buildUser".equals(beanName)){
-            log.error("011执行InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation");
+            log.error("021执行InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation");
         }
 
         return null;
@@ -31,7 +31,7 @@ public class CustomerInstantiationAwareBeanPostProcessor implements Instantiatio
     @Override
     public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
         if("buildUser".equals(beanName)){
-            log.error("013执行InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation");
+            log.error("033执行InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation");
         }
 
         return true;
@@ -41,7 +41,7 @@ public class CustomerInstantiationAwareBeanPostProcessor implements Instantiatio
     @Override
     public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) throws BeansException {
         if("buildUser".equals(beanName)){
-            log.error("014执行InstantiationAwareBeanPostProcessor#postProcessProperties");
+            log.error("034执行InstantiationAwareBeanPostProcessor#postProcessProperties");
         }
 
         return pvs;

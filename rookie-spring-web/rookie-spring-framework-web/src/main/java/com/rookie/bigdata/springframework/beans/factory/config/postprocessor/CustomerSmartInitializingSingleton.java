@@ -16,6 +16,6 @@ import org.springframework.stereotype.Component;
 public class CustomerSmartInitializingSingleton implements SmartInitializingSingleton {
     @Override
     public void afterSingletonsInstantiated() {
-        log.error("040执行SmartInitializingSingleton#afterSingletonsInstantiated");
+        log.error("050执行SmartInitializingSingleton#afterSingletonsInstantiated");
     }
 }
