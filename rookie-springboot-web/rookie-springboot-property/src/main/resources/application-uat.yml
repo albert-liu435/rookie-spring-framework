@@ -1,6 +1,8 @@
-#com:
-#  rookie:
-#    bigdata:
-#      spring:
-#        config:
-#          name: springConfigName
+spring:
+  config:
+    import:
+      - cdl:cdl-test.txt
+
+    # 不能写成 optional:cdl-test.txt，一定要带上 cdl前缀！！即 optional:cdl:cdl-test.txt
+    # 即 optional:cdl:xxx文件名
+#spring.config.import=optional:cdl:cdl-test.txt

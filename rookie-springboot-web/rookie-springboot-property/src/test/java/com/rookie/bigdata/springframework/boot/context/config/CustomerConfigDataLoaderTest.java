@@ -18,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 //@AutoConfigureMockMvc
-@ActiveProfiles("dev")
+//@ActiveProfiles("dev")
+@ActiveProfiles("uat")
 @Slf4j
 class CustomerConfigDataLoaderTest {
 
@@ -57,5 +58,16 @@ class CustomerConfigDataLoaderTest {
         String appDev = environment.getProperty("com.rookie.bigdata.spring.application.dev");
         log.info("获取的appDev为:{}", appDev);
     }
+
+    @Test
+    void testSpringConfigImportCdl() {
+//        @ActiveProfiles("uat")
+        String txtValue = environment.getProperty("cdl");
+        log.info("获取的value为:{}", txtValue);
+
+//        String appDev = environment.getProperty("com.rookie.bigdata.spring.application.dev");
+//        log.info("获取的appDev为:{}", appDev);
+    }
+
 
 }
