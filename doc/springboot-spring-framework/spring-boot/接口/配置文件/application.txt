@@ -1,0 +1,45 @@
+参考文档：
+https://blog.csdn.net/yaomingyang/article/details/105636832
+https://cloud.tencent.com/developer/article/1986714
+https://blog.csdn.net/u013887008/article/details/129313240
+
+
+配置文件整体加载流程可以查看:./springboot加载配置文件.txt
+
+1   application
+
+    测试项目：rookie-springboot-property
+    测试类以及测试方法：com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoaderTest#testApplication()
+
+    Springboot默认加载的配置文件名称为application,这主要得益于org.springframework.boot.context.config.StandardConfigDataLocationResolver中的DEFAULT_CONFIG_NAMES属性。具体的执行流程如下：
+        org.springframework.boot.context.config.StandardConfigDataLoader#load()
+            --->org.springframework.boot.context.config.ConfigDataLoaders#load()
+                --->org.springframework.boot.context.config.ConfigDataImporter#load()
+                    --->org.springframework.boot.context.config.ConfigDataImporter#resolveAndLoad()
+                        --->org.springframework.boot.context.config.ConfigDataImporter#resolve()
+                            --->org.springframework.boot.context.config.ConfigDataLocationResolvers#resolve()
+                                --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#resolve()
+                                    --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#getReferences()
+                                        --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#getReferencesForDirectory()
+        主要获取配置方法为getReferencesForDirectory(),里面创建为StandardConfigDataReference对象并返回
+
+2   spring.config.name指定配置文件名
+
+        测试项目：rookie-springboot-property
+        测试类以及测试方法：com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoaderTest#testApplication()
+
+     默认的配置文件名是application，可以使用spring.config.name指定自定义文件名，如下示例：
+     java -jar myproject.jar --spring.config.name=rookie
+
+     如果使用IDEA运行的话，在运行测试类的时候，添加变量 --spring.config.name=rookie即可,是在StandardConfigDataLocationResolver的构造方法中处理的。即如下代码
+        String[] configNames = binder.bind(CONFIG_NAME_PROPERTY, String[].class).orElse(DEFAULT_CONFIG_NAMES);如果spring.config.name对应的值为空，则使用默认的application,否则使用自定义spring.config.name中设置的值。
+        处理流程如下：
+
+        org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor#postProcessEnvironment()
+            --->org.springframework.boot.context.config.ConfigDataEnvironment#createConfigDataLocationResolvers()
+                --->org.springframework.boot.context.config.ConfigDataLocationResolvers#ConfigDataLocationResolvers
+                    --->org.springframework.boot.context.config.StandardConfigDataLocationResolver.StandardConfigDataLocationResolver()
+                        --->org.springframework.boot.context.config.StandardConfigDataLocationResolver.getConfigNames()
+
+3   spring.config.import引入额外文件
+

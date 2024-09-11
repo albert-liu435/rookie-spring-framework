@@ -1,6 +1,8 @@
 spring:
   profiles:
     active: dev
+  config:
+    name: rookie
 #  config:
 #    additional-location: classpath:/pro/a.yml
 #  config:
@@ -8,11 +10,3 @@ spring:
 server:
   port: 8080
 
-
-#com:
-#  rookie:
-#    bigdata:
-#      beans:
-#        factory:
-#          annotation:
-#            value: rookie

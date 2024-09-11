@@ -14,7 +14,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class YamlPropertyBootApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(YamlPropertyBootApplication.class,args);
+
+        SpringApplication springApplication = new SpringApplication();
+
+
+        springApplication.run(YamlPropertyBootApplication.class, args);
 
 
     }
