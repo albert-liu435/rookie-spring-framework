@@ -4,7 +4,7 @@ https://juejin.cn/post/7350140783549710347
 https://juejin.cn/post/7366532063342198822
 https://blog.csdn.net/weixin_44411039/article/details/132077006
 https://www.cnblogs.com/teach/p/16322420.html
-https://blog.csdn.net/yaomingyang/article/details/105636832
+
 
 具体可用参考：https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html
 
@@ -36,13 +36,23 @@ https://blog.csdn.net/yaomingyang/article/details/105636832
                                                             --->org.springframework.boot.env.YamlPropertySourceLoader#load()
     EnvironmentPostProcessorApplicationListener能够监听是因为在spring.factories文件中配置了该监听器
 
-    加载流程图:./pic加载配置文件.png
-    1.1 在SpringBootApplication执行run方法后，获取程序中的事件监听器后，执行prepareEnvironment方法开始准备环境。
+    加载流程图:./pic/加载配置文件.png
+    1.1 在SpringBootApplication执行run方法后，获取程序中的事件监听器后，执行 SpringApplicationRunListeners#prepareEnvironment()方法开始准备环境。
+        如图:./pic/001.png
+        prepareEnvironment方法主要为创建和配置environment
+        1.1.1   创建或者获取environment
+                ConfigurableEnvironment environment = getOrCreateEnvironment();
+                我们启动的是SERVLET应用，所以创建的environment为ApplicationServletEnvironment
+        1.1.2   配置configureEnvironment
+                这里会向ConfigurableEnvironment中设置ApplicationConversionService转换器，同时会接受applicationArguments中的args参数和configureEnvironment进行merge
     1.2 通知注册的监听器，应用程序的环境已经准备好。
+        ./pic/002.png
         listeners.environmentPrepared(bootstrapContext, environment)
     1.3 doWithListeners 遍历注册的监听器，对每个监听器执行 environmentPrepared 操作，通知它们应用程序的环境已经准备好。
+        ./pic/003.png
     1.4 处理应用事件的组件SimpleApplicationEventMulticaster开始执行multicastEvent去广播环境准备事件ApplicationEnvironmentPreparedEvent给注册的监听器，环境已经准备好，让他们可以执行环境准备阶段的自定义逻辑。
         至此，应用程序环境已经准备好的事件已经广播出去，接下来EnvironmentPostProcessorApplicationListener监听器监听到事件后就可以开始处理读取配置文件的逻辑。
+        ./pic/004.png
         1.4.1   EnvironmentPostProcessorApplicationListener监听到ApplicationEnvironmentPreparedEvent即环境已经准备好的事件，开始处理执行实现 EnvironmentPostProcessor类的postProcessEnvironment方法。
             而注册EnvironmentPostProcessor 实现类的有6个。都是加载类路径下的META-INF/spring.factories 文件中配置的EnvironmentPostProcessor实现类。
                 # Environment Post Processors
@@ -54,6 +64,7 @@ https://blog.csdn.net/yaomingyang/article/details/105636832
                 org.springframework.boot.env.SystemEnvironmentPropertySourceEnvironmentPostProcessor,\
                 org.springframework.boot.reactor.ReactorEnvironmentPostProcessor
             而ConfigDataEnvironmentPostProcessor就是用于处理加载配置文件的实现类。同时这里也是SpringBoot2.4.0前后版本关于加载配置文件差异的一个地方。
+
         1.4.2   ConfigDataEnvironmentPostProcessor开始执行postProcessEnvironment方法，创建ConfigDataEnvironment实例，然后执行其processAndApply
                 ConfigDataEnvironment类在SpringBoot2.4.0版本引入，它是SpringBoot配置数据加载和管理的核心组件。它负责从多个源加载、解析和处理配置数据，并将这些数据整合到应用环境中。在这里主要去创建ConfigDataLocationResolvers，ConfigDataLoaders以及ConfigDataEnvironmentContributors。
         1.4.3   ConfigDataLocationResolvers在SpringBoot2.4.0版本中引入，是负责解析和定位配置数据源位置的一个组件集合。是一个工厂类，用于创建配置数据位置解析器的实例，它包含了一组ConfigDataLocationResolver的实现类，目前只有两个实现类：StandardConfigDataLocationResolver以及ConfigTreeConfigDataLocationResolver。

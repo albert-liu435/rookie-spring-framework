@@ -21,7 +21,7 @@ https://blog.csdn.net/u013887008/article/details/129313240
                                 --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#resolve()
                                     --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#getReferences()
                                         --->org.springframework.boot.context.config.StandardConfigDataLocationResolver#getReferencesForDirectory()
-        主要获取配置方法为getReferencesForDirectory(),里面创建为StandardConfigDataReference对象并返回
+        主要获取配置方法为 getReferencesForDirectory(),里面创建为StandardConfigDataReference对象并返回
 
 2   spring.config.name指定配置文件名
 
@@ -40,6 +40,10 @@ https://blog.csdn.net/u013887008/article/details/129313240
                 --->org.springframework.boot.context.config.ConfigDataLocationResolvers#ConfigDataLocationResolvers
                     --->org.springframework.boot.context.config.StandardConfigDataLocationResolver.StandardConfigDataLocationResolver()
                         --->org.springframework.boot.context.config.StandardConfigDataLocationResolver.getConfigNames()
+
+4   spring.profiles.active
+    测试项目：rookie-springboot-property
+    测试类以及测试方法：com.rookie.bigdata.springframework.boot.context.config.CustomerConfigDataLoaderTest#testProfiles()
 
 3   spring.config.import引入额外文件
 

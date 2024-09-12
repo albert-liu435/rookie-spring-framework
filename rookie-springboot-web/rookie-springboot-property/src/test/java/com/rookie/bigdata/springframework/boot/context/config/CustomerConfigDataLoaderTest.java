@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 //@AutoConfigureMockMvc
 //@ActiveProfiles("dev")
-@ActiveProfiles("uat")
+//@ActiveProfiles("uat")
 @Slf4j
 class CustomerConfigDataLoaderTest {
 
@@ -31,6 +31,14 @@ class CustomerConfigDataLoaderTest {
     void testApplication() {
         //        @ActiveProfiles("dev")
         String txtValue = environment.getProperty("com.rookie.bigdata.spring.config.import");
+        log.info("获取的value为:{}", txtValue);
+    }
+
+
+    @Test
+    void testProfiles(){
+        //没有@ActiveProfiles注解
+        String txtValue = environment.getProperty("com.rookie.bigdata.spring.application.dev");
         log.info("获取的value为:{}", txtValue);
     }
 
