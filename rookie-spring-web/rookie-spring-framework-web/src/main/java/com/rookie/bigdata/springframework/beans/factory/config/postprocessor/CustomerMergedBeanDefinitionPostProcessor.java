@@ -19,7 +19,7 @@ public class CustomerMergedBeanDefinitionPostProcessor implements MergedBeanDefi
     public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 
         if("buildUser".equals(beanName)){
-            log.error("012执行MergedBeanDefinitionPostProcessor#postProcessMergedBeanDefinition");
+            log.error("023执行MergedBeanDefinitionPostProcessor#postProcessMergedBeanDefinition");
 
         }
 
