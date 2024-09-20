@@ -1,0 +1,10 @@
+https://zhuanlan.zhihu.com/p/617967367
+https://blog.csdn.net/huachangzai/category_12128828.html
+
+
+https://blog.csdn.net/u012060033/article/details/123352747
+https://juejin.cn/post/7260000504246353980
+
+
+项目:rookie-spring-framework-web
+测试类：com.rookie.bigdata.springframework.web.client.RestTemplateConfigTest
