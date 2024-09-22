@@ -1,0 +1,43 @@
+文章来源：
+https://www.jianshu.com/p/71563661cb3a
+https://blog.csdn.net/hello_ejb3/article/details/132730375
+https://www.cnblogs.com/xiazhuo/articles/16113279.html
+
+
+
+测试项目：rookie-springboot-webmvc
+测试类以及测试方法：com.rookie.bigdata.springframework.context.properties.configurationproperties.MyConfigurationPropertiesTest#test01()
+
+ConfigurationProperties处理该注解的类主要为ConfigurationPropertiesBindingPostProcessor,所以主要看一下ConfigurationPropertiesBindingPostProcessor的处理流程即可
+
+1   处理流程:
+    1.1
+    org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor#postProcessBeforeInitialization
+        1.2
+        --->org.springframework.boot.context.properties.ConfigurationPropertiesBean#get()
+            --->org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor#bind
+                1.3
+                -->org.springframework.boot.context.properties.ConfigurationPropertiesBinder#bind
+                    --->org.springframework.boot.context.properties.bind.Binder#bind
+                        1.4
+                        --->org.springframework.boot.context.properties.bind.Binder#bindObject
+
+
+
+    1.1 ConfigurationPropertiesBindingPostProcessor实现了BeanPostProcessor、PriorityOrdered、ApplicationContextAware、InitializingBean四个接口；其getOrder方法返回的是Ordered.HIGHEST_PRECEDENCE + 1即仅次于最高的优先级；其postProcessBeforeInitialization方法主要是执行bind方法(先通过ConfigurationPropertiesBean.get获取ConfigurationPropertiesBean，再通过binder进行bind)；其afterPropertiesSet主要是获取BeanDefinitionRegistry与ConfigurationPropertiesBinder
+    1.2 get方法主要是获取工厂方法，之后获取annotation，获取bindTarget，最后创建ConfigurationPropertiesBean
+        ConfigurationPropertiesBean用于代表一个标注了@ConfigurationProperties注解的bean的信息
+    1.3 ConfigurationPropertiesBinder的bind方法根据ConfigurationPropertiesBean的target与annotation取获取bindHandler，然后通过binder去执行bind方法
+        binder的构造器依赖了propertySources、placeholdersResolver、conversionService、propertyEditorInitializer、defaultBindHandler、constructorProvider
+    1.4 bindObject方法先通过findProperty获取ConfigurationProperty，然后执行bindAggregate或者bindProperty；AggregateBinder主要是处理Map、Collection、Array类型；bindProperty方法这里从property获取绑定的值，然后resolvePlaceholders，最后通过converter的convert方法把值绑定到target上
+
+    1.5 BindConverter的convert方法则是通过conversionService进行
+
+
+
+
+
+
+
+
+ConfigurationPropertiesBindingPostProcessor

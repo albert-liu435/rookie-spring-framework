@@ -1,0 +1,11 @@
+文章来源：
+https://www.jb51.net/program/3147033zg.htm
+https://www.jianshu.com/p/71563661cb3a
+https://blog.csdn.net/weixin_45131680/article/details/139226081
+
+
+@EnableConfigurationProperties注解的作用是：使 使用 @ConfigurationProperties 注解的类生效。
+
+如果一个配置类只配置@ConfigurationProperties注解，而没有使用@Component或者实现了@Component的其他注解，那么在IOC容器中是获取不到properties 配置文件转化的bean。说白了 @EnableConfigurationProperties 相当于把使用 @ConfigurationProperties 的类进行了一次注入。
+
+简单点说@EnableConfigurationProperties的功能类似于@Component。

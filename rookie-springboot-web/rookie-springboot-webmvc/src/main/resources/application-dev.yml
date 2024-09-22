@@ -3,3 +3,12 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
     fallback-to-system-locale: false
+
+
+my:
+  config:
+    properties:
+      enabled: true
+      name: zhangsan
+      security:
+        username: lisi

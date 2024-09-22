@@ -1,0 +1,6 @@
+文章来源：
+https://www.jianshu.com/p/59e28ad9e738
+https://blog.csdn.net/wgq2020/article/details/133759975
+
+
+org.springframework.boot.autoconfigure.AutoConfigurationSorter#getInPriorityOrder

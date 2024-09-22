@@ -1,0 +1,65 @@
+文章来源：https://weishihuai.blog.csdn.net/article/details/128854079
+
+Springboot自动装配原理
+
+主要由SpringBootApplication注解
+
+1   SpringBootApplication注解
+    @Target(ElementType.TYPE)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Documented
+    @Inherited
+    // @SpringBootConfiguration内部使用@Configuration修饰，标记启动类是一个Spring的配置类
+    @SpringBootConfiguration
+    // @EnableAutoConfiguration: 实现自动装配的核心注解. 内部包含两个注解：@AutoConfigurationPackage + @Import(AutoConfigurationImportSelector.class)
+    @EnableAutoConfiguration
+    // 包扫描：扫描启动类所在的包以及子包所有Bean组件并注册到IOC容器中
+    @ComponentScan(excludeFilters = {
+        @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+        @Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
+    // SpringBoot项目启动的核心注解
+    // @SpringBootApplication = @SpringBootConfiguration + @EnableAutoConfiguration + @ComponentScan
+    public @interface SpringBootApplication {
+
+        /**
+    * Exclude specific auto-configuration classes such that they will never be applied.
+    * @return the classes to exclude
+    */
+        // 等同于EnableAutoConfiguration注解的exclude属性
+        @AliasFor(annotation = EnableAutoConfiguration.class)
+        Class<?>[] exclude() default {};
+
+        /**
+    * Exclude specific auto-configuration class names such that they will never be
+    * applied.
+    * @return the class names to exclude
+    * @since 1.3.0
+    */
+        // 等同于EnableAutoConfiguration注解的excludeName属性
+        @AliasFor(annotation = EnableAutoConfiguration.class)
+        String[] excludeName() default {};
+
+        /**
+    * Base packages to scan for annotated components. Use {@link #scanBasePackageClasses}
+    * for a type-safe alternative to String-based package names.
+    * @return base packages to scan
+    * @since 1.3.0
+    */
+        // 等同于ComponentScan注解的basePackages属性
+        @AliasFor(annotation = ComponentScan.class, attribute = "basePackages")
+        String[] scanBasePackages() default {};
+
+        /**
+    * Type-safe alternative to {@link #scanBasePackages} for specifying the packages to
+    * scan for annotated components. The package of each class specified will be scanned.
+    * <p>
+    * Consider creating a special no-op marker class or interface in each package that
+    * serves no purpose other than being referenced by this attribute.
+    * @return base packages to scan
+    * @since 1.3.0
+    */
+        // 等同于ComponentScan注解的basePackageClasses属性
+        @AliasFor(annotation = ComponentScan.class, attribute = "basePackageClasses")
+        Class<?>[] scanBasePackageClasses() default {};
+
+    }
