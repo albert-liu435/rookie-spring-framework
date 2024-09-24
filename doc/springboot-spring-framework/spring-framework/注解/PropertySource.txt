@@ -1,0 +1,55 @@
+文章来源:
+https://www.cnblogs.com/xfeiyun/p/16931905.html
+https://blog.csdn.net/wochunyang/article/details/137020045
+
+
+
+测试项目：
+rookie-spring-framework-web
+测试类:
+com.rookie.bigdata.springframework.beans.factory.annotation.value.ValueDemoConfigTest
+
+
+
+注解的处理流程：
+    调用栈信息
+	  org.springframework.core.io.support.PropertySourceProcessor.processPropertySource(PropertySourceProcessor.java:88)
+	  org.springframework.context.annotation.PropertySourceRegistry.processPropertySource(PropertySourceRegistry.java:75)
+	  org.springframework.context.annotation.ConfigurationClassParser.doProcessConfigurationClass(ConfigurationClassParser.java:281)
+	  org.springframework.context.annotation.ConfigurationClassParser.processConfigurationClass(ConfigurationClassParser.java:246)
+	  org.springframework.context.annotation.ConfigurationClassParser.parse(ConfigurationClassParser.java:197)
+	  org.springframework.context.annotation.ConfigurationClassParser.parse(ConfigurationClassParser.java:165)
+	  org.springframework.context.annotation.ConfigurationClassPostProcessor.processConfigBeanDefinitions(ConfigurationClassPostProcessor.java:417)
+	  org.springframework.context.annotation.ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(ConfigurationClassPostProcessor.java:290)
+	  org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanDefinitionRegistryPostProcessors(PostProcessorRegistrationDelegate.java:349)
+	  org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(PostProcessorRegistrationDelegate.java:118)
+	  org.springframework.context.support.AbstractApplicationContext.invokeBeanFactoryPostProcessors(AbstractApplicationContext.java:789)
+	  org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:607)
+	  org.springframework.context.annotation.AnnotationConfigApplicationContext.<init>(AnnotationConfigApplicationContext.java:93)
+
+
+
+
+在 SpEL 表达式中，# 和 $ 有着不同的含义和用途：
+$ 符号：
+
+$ 用于从属性或环境中解析引用。
+它可以用来引用配置文件中的属性，系统属性，环境变量，或者任何在 Spring 容器中定义的 Bean 的属性。
+当你在 @Value 注解中使用 $ 时，Spring 会尝试在配置文件或环境中查找相应的值。
+例如：
+
+@Value("${some.property}")
+private String someProperty;
+这里，${some.property} 将会被解析为配置文件中 some.property 键对应的值。
+
+# 符号：
+
+# 用于执行 SpEL 表达式。
+它允许你执行更复杂的操作，比如调用方法、访问对象属性、执行算术运算等。
+使用 # 时，Spring 会将大括号内的内容作为 SpEL 表达式进行求值。
+例如：
+
+@Value("#{T(java.lang.Math).random() * 10}")
+private double randomValue;
+在这个例子中，#{...} 内的表达式是一个 SpEL 表达式，它调用了 java.lang.Math 类的 random() 方法，并将其结果乘以 100，然后将这个值注入到 randomValue 字段中。
+

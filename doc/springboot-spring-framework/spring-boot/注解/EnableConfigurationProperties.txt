@@ -2,7 +2,7 @@
 https://www.jb51.net/program/3147033zg.htm
 https://www.jianshu.com/p/71563661cb3a
 https://blog.csdn.net/weixin_45131680/article/details/139226081
-
+https://saint.blog.csdn.net/article/details/120121374
 
 @EnableConfigurationProperties注解的作用是：使 使用 @ConfigurationProperties 注解的类生效。
 

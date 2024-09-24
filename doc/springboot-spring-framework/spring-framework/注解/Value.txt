@@ -1,0 +1,76 @@
+文章来源:
+https://www.cnblogs.com/xfeiyun/p/16931905.html
+
+
+
+
+
+测试项目：
+rookie-spring-framework-web
+测试类:
+com.rookie.bigdata.springframework.beans.factory.annotation.value.ValueDemoConfigTest
+
+
+
+调用链路：
+    调用栈信息:
+    	  at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:506)
+    	  at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1439)
+    	  at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:599)
+    	  at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+    	  at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:337)
+    	  at org.springframework.beans.factory.support.AbstractBeanFactory$$Lambda$407/0x0000018c9e122280.getObject(Unknown Source:-1)
+    	  at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+    	  - locked <0xd29> (a java.util.concurrent.ConcurrentHashMap)
+    	  at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:335)
+    	  at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+    	  at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+    	  at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:971)
+    	  at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625)
+
+
+
+
+
+1   AutowiredAnnotationBeanPostProcessor
+    当Bean进行初始化完成之后会populateBean()对它的属性进行赋值，这个时候AutowiredAnnotationBeanPostProcessor这个后置处理器生效，从而对属性进行依赖注入赋值。
+    AutowiredAnnotationBeanPostProcessor它能够处理@Autowired和@Value注解
+
+    注意：因为@Value是BeanPostProcessor来解析的，所以具有容器隔离性（本容器内的Bean使用@Value只能引用到本容器内的值哦~，因为BeanPostProcessor是具有隔离性的）
+
+    推荐：所有的@Value都写在根容器（也就是我们常说的Service容器）内，请不要放在web容器里。也就是说，请尽量不要在controller里使用@Value注解，因为业务我们都要求放在service层
+
+    三层架构：Controller、Service、Repository务必做到职责分离和松耦合
+
+
+
+
+
+
+在 SpEL 表达式中，# 和 $ 有着不同的含义和用途：
+$ 符号：
+
+$ 用于从属性或环境中解析引用。
+它可以用来引用配置文件中的属性，系统属性，环境变量，或者任何在 Spring 容器中定义的 Bean 的属性。
+当你在 @Value 注解中使用 $ 时，Spring 会尝试在配置文件或环境中查找相应的值。
+例如：
+
+@Value("${some.property}")
+private String someProperty;
+这里，${some.property} 将会被解析为配置文件中 some.property 键对应的值。
+
+# 符号：
+
+# 用于执行 SpEL 表达式。
+它允许你执行更复杂的操作，比如调用方法、访问对象属性、执行算术运算等。
+使用 # 时，Spring 会将大括号内的内容作为 SpEL 表达式进行求值。
+例如：
+
+@Value("#{T(java.lang.Math).random() * 10}")
+private double randomValue;
+在这个例子中，#{...} 内的表达式是一个 SpEL 表达式，它调用了 java.lang.Math 类的 random() 方法，并将其结果乘以 100，然后将这个值注入到 randomValue 字段中。
+————————————————
+
+                            版权声明：本文为博主原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
+
+原文链接：https://blog.csdn.net/wochunyang/article/details/137020045
