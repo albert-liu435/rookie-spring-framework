@@ -1,3 +1,27 @@
+文章来源：
+https://saint.blog.csdn.net/article/details/123504711
+文章来源：
+https://github.com/realpdai/tech-pdai-spring-demos
+https://segmentfault.com/a/1190000044224716
+https://blog.csdn.net/Sheng_Q/article/details/128277800
+
+https://www.cnblogs.com/zhaopengcheng/p/6848346.html
+https://cloud.tencent.com/developer/article/2030611
+https://pdai.tech/md/spring/spring-x-framework-springmvc.html
+
+
+MultipartResolver: https://blog.csdn.net/qq_16992475/article/details/126713987
+LocaleResolver: https://blog.csdn.net/qq_32868023/article/details/136639010
+ThemeResolver: https://blog.csdn.net/qq_32868023/article/details/136334661
+HandlerMapping: https://blog.csdn.net/x_xhuashui/article/details/129338847
+https://www.cnblogs.com/RunningSnails/p/17124402.html
+https://blog.csdn.net/yuliantao/article/details/136544633
+https://blog.csdn.net/qq_32868023/article/details/136639019
+https://blog.csdn.net/qq_42192693/article/details/117336182
+https://blog.csdn.net/2401_83703893/article/details/137058303
+
+
+
 本篇所使用的测试类如下
 项目:rookie-spring-framework-mvc
 测试类：com.rookie.bigdata.springframework.JettyServerApplication#main()
@@ -77,22 +101,3 @@
 
 
 
-文章来源：
-https://github.com/realpdai/tech-pdai-spring-demos
-https://segmentfault.com/a/1190000044224716
-https://blog.csdn.net/Sheng_Q/article/details/128277800
-
-https://www.cnblogs.com/zhaopengcheng/p/6848346.html
-https://cloud.tencent.com/developer/article/2030611
-https://pdai.tech/md/spring/spring-x-framework-springmvc.html
-
-
-MultipartResolver: https://blog.csdn.net/qq_16992475/article/details/126713987
-LocaleResolver: https://blog.csdn.net/qq_32868023/article/details/136639010
-ThemeResolver: https://blog.csdn.net/qq_32868023/article/details/136334661
-HandlerMapping: https://blog.csdn.net/x_xhuashui/article/details/129338847
-https://www.cnblogs.com/RunningSnails/p/17124402.html
-https://blog.csdn.net/yuliantao/article/details/136544633
-https://blog.csdn.net/qq_32868023/article/details/136639019
-https://blog.csdn.net/qq_42192693/article/details/117336182
-https://blog.csdn.net/2401_83703893/article/details/137058303
