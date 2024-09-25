@@ -1,3 +1,9 @@
+文章来源:
+https://blog.csdn.net/Sheng_Q/article/details/126440133
+https://blog.csdn.net/qifu123/article/details/132908170
+
+
+
 一   事务
     事务一般指的是逻辑上一组操作，要么全部执行成功，要么全部执行失败。事务概念可以从事务的特性进行理解，本章节介绍事务的4种特性并结合转账业务进行介绍。
     1.1 原子性
@@ -101,6 +107,4 @@
 
 
 
-文章来源:
-https://blog.csdn.net/Sheng_Q/article/details/126440133
-https://blog.csdn.net/qifu123/article/details/132908170
+

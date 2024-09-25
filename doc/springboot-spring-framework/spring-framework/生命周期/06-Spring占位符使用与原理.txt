@@ -1,3 +1,9 @@
+文章来源：
+https://blog.csdn.net/seasonLai/article/details/82994463
+https://blog.csdn.net/weixin_41835612/article/details/107242055
+https://blog.csdn.net/Sheng_Q/article/details/128277725
+
+
 在学习该占位符的使用与原理，我们需要先学习一下Spring的自定义标签
 参考：./other/01-spring自定义解析.txt
 
@@ -54,7 +60,4 @@ org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#parseB
 
 
 
-文章来源：
-https://blog.csdn.net/seasonLai/article/details/82994463
-https://blog.csdn.net/weixin_41835612/article/details/107242055
-https://blog.csdn.net/Sheng_Q/article/details/128277725
+

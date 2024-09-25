@@ -1,4 +1,10 @@
 
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128858090
+
+
+
+
 一   基本用例
     @Async一般注解在方法上，用于实现方法的异步：方法调用者立即返回，待调用的方法提交给Spring的线程池执行。@Async也可以注解在类上，等价于在类中的所有方法上添加该注解。需要注意@Async只对Spring管理的对象生效。
 
@@ -112,5 +118,3 @@
 
 
 
-文章来源：
-https://blog.csdn.net/Sheng_Q/article/details/128858090

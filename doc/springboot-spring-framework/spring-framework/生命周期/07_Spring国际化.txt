@@ -1,3 +1,9 @@
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128277653?spm=1001.2014.3001.5501
+https://www.cnblogs.com/johnnyzen/p/17419972.html#_label3_2_1_1
+
+
+
 本篇所使用的测试类如下
 项目:rookie-spring-framework-web
 测试类：com.rookie.bigdata.springframework.context.messagesource.i18n.SpringResourceBundleTest#test01()
@@ -28,6 +34,4 @@ Spring共提供了四种实现类：DelegatingMessageSource, StaticMessageSource
             剩余的调用链依次为：ResourceBundle bundle = doGetBundle(basename, locale); -> ResourceBundle.getBundle(basename, locale, classLoader, control);, 而后者为JDK提供的API。
 
 
-文章来源：
-https://blog.csdn.net/Sheng_Q/article/details/128277653?spm=1001.2014.3001.5501
-https://www.cnblogs.com/johnnyzen/p/17419972.html#_label3_2_1_1
+

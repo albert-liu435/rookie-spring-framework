@@ -1,3 +1,8 @@
+文章来源：
+https://blog.csdn.net/Sheng_Q/article/details/128761386
+
+
+
 本篇所使用的测试类如下
 项目:rookie-spring-framework-web
 测试类：com.rookie.bigdata.springframework.context.lifecycle.circulate.CirculateConfigTest#testCirculate()
@@ -77,5 +82,4 @@
 
 
 
-文章来源：
-https://blog.csdn.net/Sheng_Q/article/details/128761386
+
