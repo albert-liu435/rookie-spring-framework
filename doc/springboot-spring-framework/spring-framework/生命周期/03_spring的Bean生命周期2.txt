@@ -3,6 +3,12 @@ https://cloud.tencent.com/developer/article/2216932
 https://blog.csdn.net/Sheng_Q/article/details/128277673
 
 
+测试项目：rookie-spring-framework-web
+测试类:com.rookie.bigdata.springframework.context.lifecycle.UserLifeCycleTest.test01()
+
+com.rookie.bigdata.springframework.beans.factory.config.postprocessor.PostProcessorConfigTest
+
+
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean()
     1、创建Bean
     --->org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBeanInstance()
