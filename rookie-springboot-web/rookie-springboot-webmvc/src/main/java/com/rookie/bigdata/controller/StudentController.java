@@ -3,6 +3,7 @@ package com.rookie.bigdata.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rookie.bigdata.domain.Student;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,7 @@ import java.util.Date;
  * @Version 1.0
  */
 @RestController
+@Slf4j
 public class StudentController {
 
 
@@ -36,6 +38,7 @@ public class StudentController {
         student.setBirthDate(new Date());
 
         System.out.println(mapper.writeValueAsString(student));
+        log.info("请求的数据为：{}",mapper.writeValueAsString(student));
 
         return student;
     }

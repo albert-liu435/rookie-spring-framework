@@ -4,11 +4,15 @@ com.rookie.bigdata.WebMvcBootApplication
 
 com.rookie.bigdata.controller.StudentController
 
+com.rookie.bigdata.controller.UserController
+
 1 工作原理
     说明：本文重点在于说明参数解析器的工作原理和使用方式，为避免文章过于冗长，会刻意省略对异步请求和文件上传部分的分支逻辑，读者可在理解主线逻辑后自定阅读该部分源码。源码介绍时，会忽略所有的日志打印以及与主线逻辑无关的try-catch-finnally块
     1.1 解析原理
         SpringMVC系列-2 HTTP请求调用链 中介绍过：收到http请求后，进入DispatcherServlet的dispatcherServlet方法：
-        在执行HandlerInterceptor的preHandle和postHandle之间，会通过ha.handle(processedRequest, response, mappedHandler.getHandler())反射调用Controller接口，跟踪该调用链进入
+        在执行HandlerInterceptor的preHandle和postHandle之间，RequestMappingHandlerAdapter会通过ha.handle(processedRequest,
+        response, mappedHandler.getHandler())反射调用Controller接口，跟踪该调用链进入 RequestMappingHandlerAdapter.invokeHandlerMethod
+        ()
         public void invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
         	//	⚠️1.调用controller接口
         	Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs);
@@ -112,10 +116,27 @@ com.rookie.bigdata.controller.StudentController
     1.2 初始化过程
         1.2.1   ServletInvocableHandlerMethods的resolvers属性
             解析过程的核心在于参数解析器，即ServletInvocableHandlerMethod对象中的HandlerMethodArgumentResolverComposite resolvers属性，而每次HTTP调用都会生成一个ServletInvocableHandlerMethod对象，因此关注该对象的resolvers属性如何被初始化即可：
+            public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter implements BeanFactoryAware, InitializingBean {
+            	protected ModelAndView invokeHandlerMethod(HttpServletRequest request, HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
+            		// ...
+
+            		ServletInvocableHandlerMethod invocableMethod = new ServletInvocableHandlerMethod(handlerMethod);
+            		if (this.argumentResolvers != null) {
+            			invocableMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+            		}
+
+            		// ...
+
+            		invocableMethod.invokeAndHandle(webRequest, mavContainer);
+
+            		// ...
+            	}
+            }
+
             如上所示：ServletInvocableHandlerMethod对象的resolvers属性来自RequestMappingHandlerAdapter对象的this.argumentResolvers属性。
             RequestMappingHandlerAdapter的argumentResolvers属性
                 继续跟踪RequestMappingHandlerAdapter的this.argumentResolvers属性初始化过程，需要注意的是RequestMappingHandlerAdapter是全局Bean对象，因此可以从头梳理一下该对象关于argumentResolvers属性的初始化过程。
-                1.2.1.1 实例化阶段
+                1.2.1.1 实例化阶段 在WebMvcConfigurationSupport中
                     @Bean
                     public RequestMappingHandlerAdapter requestMappingHandlerAdapter(
                     		@Qualifier("mvcContentNegotiationManager") ContentNegotiationManager contentNegotiationManager,
@@ -130,19 +151,124 @@ com.rookie.bigdata.controller.StudentController
                     }
                     createRequestMappingHandlerAdapter()返回RequestMappingHandlerAdapter实例后，将getArgumentResolvers()获取的自定义参数解析器设置到this.customArgumentResolvers属性中。
                     看一下getArgumentResolvers()逻辑：
+                    protected final List<HandlerMethodArgumentResolver> getArgumentResolvers() {
+                    	this.argumentResolvers = new ArrayList<>();
+                    	addArgumentResolvers(this.argumentResolvers);
+                    	return this.argumentResolvers;
+                    }
+
+                    @Override
+                    protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+                    	this.configurers.addArgumentResolvers(argumentResolvers);
+                    }
+
+                    argumentResolvers数据来自于this.configurers，看一下这个属性的初始化过程：
+                    @Configuration(proxyBeanMethods = false)
+                    public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
+
+                    	private final WebMvcConfigurerComposite configurers = new WebMvcConfigurerComposite();
+
+                    	@Autowired(required = false)
+                    	public void setConfigurers(List<WebMvcConfigurer> configurers) {
+                    		if (!CollectionUtils.isEmpty(configurers)) {
+                    			this.configurers.addWebMvcConfigurers(configurers);
+                    		}
+                    	}
+                    }
                    configurers来自于IOC容器中WebMvcConfigurer类型的对象。
 
                    因此用户可自定义WebMvcConfigurer对象并将其注入到IOC中，在自定义的WebMvcConfigurer类中通过复写addArgumentResolvers方法可实现自定义参数解析器的添加。
                 1.2.1.2 初始化阶段
                     RequestMappingHandlerAdapter实现了InitializingBean接口，在Bean的初始化阶段中，会调用其afterPropertiesSet()钩子函数：
+                    @Override
+                    public void afterPropertiesSet() {
+                    	// ...
+                    	if (this.argumentResolvers == null) {
+                    		List<HandlerMethodArgumentResolver> resolvers = getDefaultArgumentResolvers();
+                    		this.argumentResolvers = new HandlerMethodArgumentResolverComposite().addResolvers(resolvers);
+                    	}
+                    	// ...
+                    }
+
                     可以看出所有的参数解析器来自有getDefaultArgumentResolvers()方法：
+                    private List<HandlerMethodArgumentResolver> getDefaultArgumentResolvers() {
+                    	List<HandlerMethodArgumentResolver> resolvers = new ArrayList<>(30);
+
+                    	// Annotation-based argument resolution
+                    	resolvers.add(new RequestParamMethodArgumentResolver(getBeanFactory(), false));
+                    	resolvers.add(new RequestParamMapMethodArgumentResolver());
+                    	resolvers.add(new PathVariableMethodArgumentResolver());
+                    	resolvers.add(new PathVariableMapMethodArgumentResolver());
+                    	resolvers.add(new MatrixVariableMethodArgumentResolver());
+                    	resolvers.add(new MatrixVariableMapMethodArgumentResolver());
+                    	resolvers.add(new ServletModelAttributeMethodProcessor(false));
+                    	resolvers.add(new RequestResponseBodyMethodProcessor(getMessageConverters(), this.requestResponseBodyAdvice));
+                    	resolvers.add(new RequestPartMethodArgumentResolver(getMessageConverters(), this.requestResponseBodyAdvice));
+                    	resolvers.add(new RequestHeaderMethodArgumentResolver(getBeanFactory()));
+                    	resolvers.add(new RequestHeaderMapMethodArgumentResolver());
+                    	resolvers.add(new ServletCookieValueMethodArgumentResolver(getBeanFactory()));
+                    	resolvers.add(new ExpressionValueMethodArgumentResolver(getBeanFactory()));
+                    	resolvers.add(new SessionAttributeMethodArgumentResolver());
+                    	resolvers.add(new RequestAttributeMethodArgumentResolver());
+
+                    	// Type-based argument resolution
+                    	resolvers.add(new ServletRequestMethodArgumentResolver());
+                    	resolvers.add(new ServletResponseMethodArgumentResolver());
+                    	resolvers.add(new HttpEntityMethodProcessor(getMessageConverters(), this.requestResponseBodyAdvice));
+                    	resolvers.add(new RedirectAttributesMethodArgumentResolver());
+                    	resolvers.add(new ModelMethodProcessor());
+                    	resolvers.add(new MapMethodProcessor());
+                    	resolvers.add(new ErrorsMethodArgumentResolver());
+                    	resolvers.add(new SessionStatusMethodArgumentResolver());
+                    	resolvers.add(new UriComponentsBuilderMethodArgumentResolver());
+
+                    	// Custom arguments
+                    	if (getCustomArgumentResolvers() != null) {
+                    		resolvers.addAll(getCustomArgumentResolvers());
+                    	}
+
+                    	// Catch-all
+                    	resolvers.add(new RequestParamMethodArgumentResolver(getBeanFactory(), true));
+                    	resolvers.add(new ServletModelAttributeMethodProcessor(true));
+
+                    	return resolvers;
+                    }
+
                     这里包含了框架内置的参数解析器以及自定义参数解析器，需要注意一下几点：
                         （1）getCustomArgumentResolvers()来自于【1】实例化阶段中设置的自定义参数解析器；
                         （2）自定义参数解析器的顺序比较靠后，需要避免被其他参数解析器拦截，supportsParameter方法可以根据参数类型进行匹配。
                         （3）首位端各存在一个RequestParamMethodArgumentResolver类型的参数解析器，区别是内部useDefaultResolution属性前者是false, 后者是true.
 
 
-
+2   常见的参数解析器
+    2.1 Spring框架默认的消息解析器超过20个
+        2.1.2   上述26个参数解析器按照匹配条件类型可以分为：
+            【1】注解类型
+            根据Controller接口中参数是否拥有指定注解确定使用的参数解析器：
+            @RequestParam -> RequestParamMethodArgumentResolver, RequestParamMapMethodArgumentResolver
+            @PathVariable -> PathVariableMethodArgumentResolver, PathVariableMapMethodArgumentResolver
+            @MatrixVariable -> MatrixVariableMethodArgumentResolver, MatrixVariableMapMethodArgumentResolver
+            @ModelAttribute -> ModelAttributeMethodProcessor
+            @RequestBody -> RequestResponseBodyMethodProcessor
+            @RequestPart -> RequestPartMethodArgumentResolver
+            @RequestHeader -> RequestHeaderMethodArgumentResolver, RequestHeaderMapMethodArgumentResolver
+            @CookieValue -> ServletCookieValueMethodArgumentResolver
+            @Value -> ExpressionValueMethodArgumentResolver
+            @SessionAttribute -> SessionAttributeMethodArgumentResolver
+            @RequestAttribute -> RequestAttributeMethodArgumentResolver
+            上述参数解析器根据是否有对应注解(以及满足特定条件)确定是否匹配参数。
+            【2】参数类型
+            根据Controller接口中参数类型确定使用的参数解析器。
+            ServletResponse及其子类, OutputStream及其子类, Writer及其子类 -> ServletResponseMethodArgumentResolver
+            HttpEntity, RequestEntity -> HttpEntityMethodProcessor
+            RedirectAttributes及其子类 -> RedirectAttributesMethodArgumentResolver
+            Model及其子类 -> ModelMethodProcessor
+            Errors及其子类 -> ErrorsMethodArgumentResolver
+            SessionStatus -> SessionStatusMethodArgumentResolver
+            UriComponentsBuilder, ServletUriComponentsBuilder -> UriComponentsBuilderMethodArgumentResolver
+            部分参数解析器的supportsParameter方法条件比较复杂，如下所示：
+            ServletRequestMethodArgumentResolver：
+            支持的类型较多
 
 
 
