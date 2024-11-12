@@ -1,6 +1,154 @@
+测试项目：
+rookie-springboot-webmvc
+com.rookie.bigdata.WebMvcBootApplication
+
+com.rookie.bigdata.controller.UserInfoController
 
 
+背景
+SpringMVC系列的第五篇介绍消息转换器，本文讨论的消息转换指代调用Controller接口后，对结果进行转换处理的过程。
+内容包括介绍自定义消息转换器、SpringMVC常见的消息转换器、Spring消息转换器工作原理等三部分。
 
+1   自定义消息转换器
+        自定义消息转换器，需要实现HttpMessageConverter接口，该接口定义如下：
+        public interface HttpMessageConverter<T> {
+        	boolean canWrite(Class<?> clazz, @Nullable MediaType mediaType);
+
+        	void write(T t, @Nullable MediaType contentType, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException;
+
+        	List<MediaType> getSupportedMediaTypes();
+
+        	// ⚠️：read相关逻辑不是本文关注的部分
+        	boolean canRead(Class<?> clazz, @Nullable MediaType mediaType);
+        	T read(Class<? extends T> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException;
+        }
+        有三个比较重要的方法：
+        (1) getSupportedMediaTypes方法返回该解析器支持的MIME媒体类型；
+        (2) canWrite方法判断该解析器能否将目标类型的对象转化为指定的MIME媒体类型；
+        (3) write方法将目标对象转化为mediaType的二进制流并写入到outputMessage流对象中。
+        自定义消息转换器
+
+2   消息转换器
+    2.1 框架内置的消息解析器
+        框架内置的消息解析器支持的MIME类型分布如下所示：
+        ByteArrayHttpMessageConverter：用于处理字节数组（byte array）的转换。
+            ByteArrayHttpMessageConverter
+                application/octet-stream
+                */*
+        StringHttpMessageConverter：用于处理字符串的转换。
+            StringHttpMessageConverter
+                text/plain
+                */*
+        ResourceHttpMessageConverter：用于处理Spring Resource的实现类的转换。Spring Resource是一个抽象类，它封装了对各种资源（如文件、数据库连接等）的操作。
+            ResourceHttpMessageConverter
+                */*
+        ResourceRegionHttpMessageConverter：这个类是ResourceHttpMessageConverter的子类，它用于处理Resource的某个特定区域（如文件的某个部分）。
+            ResourceRegionHttpMessageConverter
+                */*
+        SourceHttpMessageConverter：用于处理javax.xml.transform.Source的转换。javax.xml.transform.Source是用于XML转换的接口。
+            SourceHttpMessageConverter
+                application/xml
+                text/xml
+                application/*+xml
+        AllEncompassingFormHttpMessageConverter：用于处理表单提交请求，能解析复杂的form表单，包括文件上传等。
+            AllEncompassingFormHttpMessageConverter
+                application/x-www-form-urlencoded
+                multipart/form-data
+                multipart/mixed
+        MappingJackson2HttpMessageConverter：用于处理JSON序列化和反序列化。
+            MappingJackson2HttpMessageConverter
+                application/json
+                application/*+json
+        Jaxb2RootElementHttpMessageConverter：这个类使用JAXB（Java Architecture for XML Binding）进行XML序列化和反序列化。
+            Jaxb2RootElementHttpMessageConverter
+                application/xml
+                text/xml
+                application/*+xml
+        [1] HttpMessageConvertersAutoConfiguration自动装配类引入的StringHttpMessageConverter替代了默认的StringHttpMessageConverter(SpringMVC框架自带)，区别是前者默认字符集为UTF_8，后者为ISO_8859_1。
+
+        [2] JacksonHttpMessageConvertersConfiguration自动装配类引入的MappingJackson2HttpMessageConverter替代了默认的MappingJackson2HttpMessageConverter。区别是使用其内部实现序列化和反序列化的ObjectMapper对象来自全局Bean对象(来自JacksonAutoConfiguration自动装配类引入的ObjectMapper)。因此在配置文件中对spring.jackson属性的配置可以体现在MappingJackson2HttpMessageConverter转换器上。
+
+    2.2 MappingJackson2HttpMessageConverter转换器
+        2.2.1   匹配方法
+                由于MappingJackson2HttpMessageConverter是GenericHttpMessageConverter接口的实现类，匹配时根据canWrite(Type, Class<?>, MediaType)方法进行:
+                该方法可以分为三个部分:
+                [1] 调用canWrite(MediaType)判断媒体类型是否支持:
+                    如果mediaType为空或者*/*或者与消息解析器支持的类型匹配则返回true;框架预置MappingJackson2HttpMessageConverter时，支持的MediaType已确定，为application/json和application/*+json
+                [2] 判断编码类型是否符合, 支持的编码格式有UTF-8,UTF-16BE,UTF-16LE,UTF-32BE,UTF-32LE,US-ASCII。MediaType对象的Charset为空时，默认支持；
+                [3] 调用ObjectMapper的canSerialize方法判断是否可被序列化;
+
+                AtomicReference<Throwable> causeRef = new AtomicReference<>();
+                if (this.objectMapper.canSerialize(clazz, causeRef)) {
+                	return true;
+                }
+        2.2.2   写方法
+                @Override
+                public final void write(final T t, @Nullable final Type type, @Nullable MediaType contentType, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+                	final HttpHeaders headers = outputMessage.getHeaders();
+                	// 添加Content-type: application/json
+                	addDefaultHeaders(headers, t, contentType);
+                	if (outputMessage instanceof StreamingHttpOutputMessage) {
+                		StreamingHttpOutputMessage streamingOutputMessage = (StreamingHttpOutputMessage) outputMessage;
+                		streamingOutputMessage.setBody(outputStream -> writeInternal(t, type, new HttpOutputMessage() {
+                			@Override
+                			public OutputStream getBody() {
+                				return outputStream;
+                			}
+                			@Override
+                			public HttpHeaders getHeaders() {
+                				return headers;
+                			}
+                		}));
+                	} else {
+                		writeInternal(t, type, outputMessage);
+                		outputMessage.getBody().flush();
+                	}
+                }
+                write方法包含两个逻辑步骤：添加默认头域和写操作，写操作的实际执行方法在writeInternal中：
+                @Override
+                protected void writeInternal(Object object, @Nullable Type type, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+                	MediaType contentType = outputMessage.getHeaders().getContentType();
+                	 // 默认为UTF_8类型
+                	JsonEncoding encoding = getJsonEncoding(contentType);
+                	JsonGenerator generator = this.objectMapper.getFactory().createGenerator(outputMessage.getBody(), encoding);
+                	writePrefix(generator, object);
+
+                	Object value = object;
+                	Class<?> serializationView = null;
+                	FilterProvider filters = null;
+                	JavaType javaType = null;
+
+                	if (object instanceof MappingJacksonValue) {
+                		MappingJacksonValue container = (MappingJacksonValue) object;
+                		value = container.getValue();
+                		serializationView = container.getSerializationView();
+                		filters = container.getFilters();
+                	}
+                	if (type != null && TypeUtils.isAssignable(type, value.getClass())) {
+                		javaType = getJavaType(type, null);
+                	}
+
+                	ObjectWriter objectWriter = (serializationView != null ?
+                			this.objectMapper.writerWithView(serializationView) : this.objectMapper.writer());
+                	if (filters != null) {
+                		objectWriter = objectWriter.with(filters);
+                	}
+                	if (javaType != null && javaType.isContainerType()) {
+                		objectWriter = objectWriter.forType(javaType);
+                	}
+                	SerializationConfig config = objectWriter.getConfig();
+                	if (contentType != null && contentType.isCompatibleWith(MediaType.TEXT_EVENT_STREAM) &&
+                			config.isEnabled(SerializationFeature.INDENT_OUTPUT)) {
+                		objectWriter = objectWriter.with(this.ssePrettyPrinter);
+                	}
+                	objectWriter.writeValue(generator, value);
+
+                	writeSuffix(generator, object);
+                	generator.flush();
+                }
+                上述方法可以分为三个步骤：添加前缀(如果有,内置的对象无前缀)、写内容、添加后缀(如果有,内置的对象无前缀)，操作完全基于objectMapper对象；关于ObjectMappr的API用法不是本文的重点，不进行赘述。
+
+3   工作原理
 
 
 文章来源：

@@ -1,7 +1,9 @@
 package com.rookie.bigdata.config.annotation;
 
+import com.rookie.bigdata.springframework.http.converter.UserInfoHttpMessageConverter;
 import com.rookie.bigdata.springframework.web.method.support.MyArgumentResolver;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -19,5 +21,10 @@ public class BaseWebMvcConfigurer implements WebMvcConfigurer {
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new MyArgumentResolver());
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(0, new UserInfoHttpMessageConverter());
     }
 }
