@@ -1,3 +1,262 @@
+测试项目：
+rookie-springboot-webmvc
+com.rookie.bigdata.WebMvcBootApplication
+
+com.rookie.bigdata.controller.ExceptionController
+
+
+背景
+本文作为 SpringMVC系列 的第六篇，介绍SpringMVC的异常处理器。内容包括异常处理器的使用方式、实现原理和内置异常处理器的装配过程。
+
+2   异常处理过程
+    说明1：异常请求和文件上传功能不是本文关注的重点，为突出主线逻辑，本文会可以略去对该部分的介绍。
+    说明2: 本文以SpringMVC系列1-5为前提，对相同部分不再介绍。
+    当请求经过Tomcat进入DispatcherServlet中后，线程进入以下逻辑：
+        protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        	//...
+        	try {
+        		try {
+        			if (!mappedHandler.applyPreHandle(processedRequest, response)) {
+        				return;
+        			}
+        			mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
+        			mappedHandler.applyPostHandle(processedRequest, response, mv);
+        		} catch (Exception ex) {
+        			dispatchException = ex;
+        		} catch (Throwable err) {
+        			dispatchException = new NestedServletException("Handler dispatch failed", err);
+        		}
+        		processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
+        	} catch (Exception ex) {
+        		triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
+        	} catch (Throwable err) {
+        		triggerAfterCompletion(processedRequest, response, mappedHandler, new NestedServletException("Handler processing failed", err));
+        	} finally {
+        	//...
+        	}
+        }
+        从整体结构上看，代码包含两层try-catch，分别对Exeception和Throwable进行捕获，以保证内层异常不会向外传播；即无论当HTTP请求处理过程是否有异常，processDispatchResult方法都会被执行；区别是，如果处理正常时，dispatchException对象为空。
+        进入processDispatchResult方法:
+        private void processDispatchResult(HttpServletRequest request, HttpServletResponse response, @Nullable HandlerExecutionChain mappedHandler, @Nullable ModelAndView mv, @Nullable Exception exception) throws Exception {
+              boolean errorView = false;
+              if (exception != null) {
+                  if (exception instanceof ModelAndViewDefiningException) {//...}
+                  else {
+                      Object handler = (mappedHandler != null ? mappedHandler.getHandler() : null);
+                      // 异常处理逻辑
+                      mv = processHandlerException(request, response, handler, exception);
+                      errorView = (mv != null);
+                  }
+              }
+              if (mv != null && !mv.wasCleared()) {//...} else {//日志打印...}
+              if (WebAsyncUtils.getAsyncManager(request).isConcurrentHandlingStarted()) {//...处理异步请求}
+              if (mappedHandler != null) {
+                  // 调用拦截器的afterCompletion方法[HTTP请求正常处理过程也会调用]
+                  mappedHandler.triggerAfterCompletion(request, response, null);
+              }
+          }
+        Note: processDispatchResult方法的核心逻辑在processHandlerException方法，对processHandlerException方法进行逻辑提取得到:
+        protected ModelAndView processHandlerException(HttpServletRequest request, HttpServletResponse response, @Nullable Object handler, Exception ex) throws Exception {
+             ModelAndView exMv = null;
+             //遍历List<HandlerExceptionResolver> handlerExceptionResolvers属性调用元素HandlerExceptionResolver对象的resolveException方法，直到返回的ModelAndView对象不为空；[标注1]
+             if (this.handlerExceptionResolvers != null) {
+                 for (HandlerExceptionResolver resolver : this.handlerExceptionResolvers) {
+                     exMv = resolver.resolveException(request, response, handler, ex);
+                     if (exMv != null) {
+                         break;
+                     }
+                 }
+             }
+             if (exMv != null) {
+                 if (exMv.isEmpty()) {
+                     request.setAttribute(EXCEPTION_ATTRIBUTE, ex);
+                     return null;
+                 }
+             }
+             //遍历完handlerExceptionResolvers后，exMv仍然为null，则继续抛出该异常[标注2]
+             throw ex;
+         }
+        Note:
+        [1] handlerExceptionResolvers属性与异常处理器的关系图如下所示：
+        按需遍历DefaultErrorAttributes和HandlerExceptionResolverComposite，其中DefaultErrorAttributes仅对HttpServletRequest对象添加属性，返回的ModelAndView为空对象。即处理逻辑在HandlerExceptionResolverComposite.
+        [2] 遍历完handlerExceptionResolvers后，exMv仍然为null，则将该异常抛出给Tomcat,由Tomcat处理
+        private void exception(Request request, Response response, Throwable exception) {
+            request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, exception);
+            response.setStatus(500);
+            response.setError();
+        }
+        最后返回的HTTP响应的状态码为500.
+
+        继续HandlerExceptionResolverComposite的介绍：
+            public class HandlerExceptionResolverComposite implements HandlerExceptionResolver, Ordered {
+                 private List<HandlerExceptionResolver> resolvers;
+
+                 // ...
+
+                 @Override
+                 @Nullable
+                 public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, @Nullable Object handler, Exception ex) {
+                     if (this.resolvers != null) {
+                         for (HandlerExceptionResolver handlerExceptionResolver : this.resolvers) {
+                             ModelAndView mav = handlerExceptionResolver.resolveException(request, response, handler, ex);
+                             if (mav != null) {
+                                 return mav;
+                             }
+                         }
+                     }
+                     return null;
+                 }
+             }
+            HandlerExceptionResolverComposite是一个组合类型，内部维护了一个List<HandlerExceptionResolver>类型的属性resolvers，异常解析任务委托给了resolvers属性。resolvers属性在初始化时确定了成员，包含ExceptionHandlerExceptionResolver、ResponseStatusExceptionResolver、DefaultHandlerExceptionResolver. 顺序确定了其优先级，即ExceptionHandlerExceptionResolver优先级最高。
+            ExceptionHandlerExceptionResolver：
+            用于处理使用@ControllerAdvice注解的类中的@ExceptionHandler方法抛出的异常。当控制器方法抛出异常时，Spring MVC会查找@ControllerAdvice注解的类中是否有匹配的@ExceptionHandler方法，
+            如果有，则使用ExceptionHandlerExceptionResolver来处理异常。
+            ResponseStatusExceptionResolver：
+            用于处理使用@ResponseStatus注解的异常。当控制器方法抛出使用@ResponseStatus注解标注的异常时，Spring MVC会使用ResponseStatusExceptionResolver来处理异常。
+            DefaultHandlerExceptionResolver：用于处理其他未被处理的异常。当控制器方法抛出其他未被处理的异常时，Spring MVC会使用DefaultHandlerExceptionResolver来处理异常。
+
+            Note: 第一章中自定义的异常处理器就关联在ExceptionHandlerExceptionResolver对象中。
+            进入ExceptionHandlerExceptionResolver的resolveException方法:
+            public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, @Nullable Object handler, Exception ex) {
+               if (shouldApplyTo(request, handler)) {
+                   prepareResponse(ex, response);
+                   ModelAndView result = doResolveException(request, response, handler, ex);
+                   // 日志打印...
+                   return result;
+               } else {
+                   return null;
+               }
+            }
+            shouldApplyTo方法是否应该处理，prepareResponse进行预处理，doResolveException实际进行异常解析。在装配时确定了ExceptionHandlerExceptionResolver对象的mappedHandlers和mappedHandlerClasses属性为空，因此shouldApplyTo方法默认返回true(其他两个解析器相同);prepareResponse方法用于对响应头添加标记;因preventResponseCaching为false, 不会进行操作.
+
+            进入doResolveException方法:
+            protected ModelAndView doResolveHandlerMethodException(HttpServletRequest request, HttpServletResponse response, @Nullable HandlerMethod handlerMethod, Exception exception) {
+                   // 获取ServletInvocableHandlerMethod对象，如果返回为空表示没有异常没有匹配的处理器
+                   ServletInvocableHandlerMethod exceptionHandlerMethod = getExceptionHandlerMethod(handlerMethod, exception);
+                   if (exceptionHandlerMethod == null) {
+                       return null;
+                   }
+
+                   if (this.argumentResolvers != null) {
+                       // 设置参数解析器
+                       exceptionHandlerMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+                   }
+                   if (this.returnValueHandlers != null) {
+                       // 设置消息解析器
+                       exceptionHandlerMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
+                   }
+
+                   ServletWebRequest webRequest = new ServletWebRequest(request, response);
+                   ModelAndViewContainer mavContainer = new ModelAndViewContainer();
+
+                   Throwable cause = exception.getCause();
+                   // 根据异常是否设置了cause属性进行区分调用重载的invokeAndHandle方法;二者主体逻辑相同，仅在参数解析阶段存在区别。
+                   if (cause != null) {
+                       // 反射调用目标方法, 调用自定义异常解析器中匹配的方法
+                       exceptionHandlerMethod.invokeAndHandle(webRequest, mavContainer, exception, cause, handlerMethod);
+                   } else {
+                       exceptionHandlerMethod.invokeAndHandle(webRequest, mavContainer, exception, handlerMethod);
+                   }
+                   return new ModelAndView();
+               }
+            上述流程与调用Controller接口过程较为相似，相同部分不再说明。请参考SpringMVC系列其他文章。核心逻辑在于getExceptionHandlerMethod方法如何构造ServletInvocableHandlerMethod；
+            删除getExceptionHandlerMethod方法中与异常解析无关的逻辑:
+            protected ServletInvocableHandlerMethod getExceptionHandlerMethod(@Nullable HandlerMethod handlerMethod, Exception exception) {
+             	// 获取异常所在Controller类，如果被代理了，返回原始类型
+                Class<?> handlerType = handlerMethod.getBeanType();
+                if (Proxy.isProxyClass(handlerType)) {
+                    handlerType = AopUtils.getTargetClass(handlerMethod.getBean());
+                }
+
+                // 从exceptionHandlerAdviceCache属性中获取异常解析器(遍历、匹配、处理)标注[1]
+                for (Map.Entry<ControllerAdviceBean, ExceptionHandlerMethodResolver> entry : this.exceptionHandlerAdviceCache.entrySet()) {
+                    ControllerAdviceBean advice = entry.getKey();
+                    if (advice.isApplicableToBeanType(handlerType)) {
+                        ExceptionHandlerMethodResolver resolver = entry.getValue();
+                        Method method = resolver.resolveMethod(exception);
+                        if (method != null) {
+                            // 标注[2]
+                            return new ServletInvocableHandlerMethod(advice.resolveBean(), method);
+                        }
+                    }
+                }
+                return null;
+            }
+            Note:
+            [1] 匹配根据异常类型进行，this.exceptionHandlerAdviceCache属性中包含了异常类型与异常处理方法的映射关系。 如:
+            @RestControllerAdvice
+            public class MyClientExceptionHandler {
+                @ExceptionHandler(ClientException1.class)
+                public ResponseEntity<?> handleClientException1(ClientException1 exception) {
+                    System.out.println(exception);
+                    return ResponseEntity.status(400).body("client error 1");
+                }
+
+                @ExceptionHandler(ClientException2.class)
+                public ResponseEntity<?> handleClientException2(ClientException2 exception) {
+                    System.out.println(exception);
+                    return ResponseEntity.status(400).body("client error 2");
+                }
+            }
+
+            @RestControllerAdvice
+            public class MyServerExceptionHandler {
+                @ExceptionHandler(ServerException1.class)
+                public ResponseEntity<?> handleServerException1(ServerException1 exception) {
+                    System.out.println(exception);
+                    return ResponseEntity.status(400).body("server error 1");
+                }
+
+                @ExceptionHandler(ServerException2.class)
+                public ResponseEntity<?> handleServerException2(ServerException2 exception) {
+                    System.out.println(exception);
+                    return ResponseEntity.status(400).body("server error 2");
+                }
+            }
+        则:this.exceptionHandlerAdviceCache保存了如下信息：
+        MyClientExceptionHandler实例 -> [ClientException1类型 -> handleClientException1方法, ClientException2类型 -> handleClientException2方法]
+        MyServerExceptionHandler实例 -> [ServerException1类型 -> handleServerException1方法, ServerException2类型 -> handleServerException2方法]
+        使得可以通过异常类型，如ClientException1找到MyClientExceptionHandler实例以及handleClientException1方法信息。
+        诚然从this.exceptionHandlerAdviceCache结构中获取信息不够友好，框架为此添加了中间变量和缓存。
+
+        [2] new ServletInvocableHandlerMethod(advice.resolveBean(), method);
+        通过advice.resolveBean()和method构造ServletInvocableHandlerMethod对象返回。
+        其中：advice.resolveBean()表示自定义的Bean对象(@ControllerAdvice注解的对象)，如MyClientExceptionHandler或MyServerExceptionHandler；
+        method表示Controller接口对应的方法。
+        跟踪new ServletInvocableHandlerMethod(advice.resolveBean(), method)进入ServletInvocableHandlerMethod父类的构造器:
+        public HandlerMethod(Object bean, Method method) {
+        	this.bean = bean;
+        	this.beanFactory = null;
+        	this.beanType = ClassUtils.getUserClass(bean);
+        	this.method = method;
+        	this.bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
+        	this.parameters = initMethodParameters();
+        	evaluateResponseStatus();
+        	this.description = initDescription(this.beanType, this.method);
+        }
+        这里的bridgedMethod属性是后续反射调用的方法实例，来源于自定义异常解析器中的方法，
+        如MyClientExceptionHandler的handleClientException1方法或handleClientException2方法。
+        temp9:
+        最后看一下ExceptionHandlerExceptionResolver中exceptionHandlerAdviceCache属性的初始化过程，
+        该属性保存了异常到异常处理方法的映射关系。
+        ExceptionHandlerExceptionResolver实现了InitializingBean接口，即被注册到IOC容器前会执行的afterPropertiesSet方法：
+        @Override
+        public void afterPropertiesSet() {
+        	// 设置exceptionHandlerAdviceCache属性[标注1]
+        	initExceptionHandlerAdviceCache();
+
+        	// 设置框架默认的参数解析器
+        	if (this.argumentResolvers == null) {
+        		List<HandlerMethodArgumentResolver> resolvers = getDefaultArgumentResolvers();
+        		this.argumentResolvers = new HandlerMethodArgumentResolverComposite().addResolvers(resolvers);
+        	}
+
+        	// 设置框架默认的消息解析器
+        	if (this.returnValueHandlers == null) {
+        		List<HandlerMethodReturnValueHandler> handlers = getDefaultReturnValueHandlers();
+        		this.returnValueHandlers = new HandlerMethodReturnValueHandlerComposite().addHandlers(handlers);
+        	}
+        }
 
 
 
