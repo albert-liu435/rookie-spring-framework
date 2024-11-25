@@ -17,6 +17,10 @@
     </environments>
 
     <mappers>
-        <mapper class="mapper.DemoMapper"></mapper>
+<!--        <mapper class="com.rookie.bigdata.mapper.EmployeeMapper"></mapper>-->
+
+        <mapper resource="EmployeeMapper.xml"></mapper>
     </mappers>
+
+
 </configuration>

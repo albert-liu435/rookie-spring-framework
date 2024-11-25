@@ -51,9 +51,29 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.11.3</version>
+            <scope>test</scope>
+        </dependency>
+
 
 
     </dependencies>
+<!--    <build>-->
+<!--        <resources>-->
+<!--            <resource>-->
+<!--                <directory>${basedir}/src/main/java</directory>-->
+<!--                <includes>-->
+<!--                    <include>**/*.xml</include>-->
+<!--                </includes>-->
+<!--                &lt;!&ndash; 是否替换资源中的属性&ndash;&gt;-->
+<!--&lt;!&ndash;                <filtering>false</filtering>&ndash;&gt;-->
+<!--            </resource>-->
+<!--        </resources>-->
+<!--    </build>-->
 
 
 <!--    <build>-->

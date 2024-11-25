@@ -156,6 +156,10 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+
+    </dependencies>
+
     <profiles>
 
     </profiles>
