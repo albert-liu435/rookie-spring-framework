@@ -18,7 +18,7 @@
 
 
     <modules>
-        <module>rookie-mini-spring</module>
+       <!-- <module>rookie-mini-spring</module>-->
         <module>rookie-spring-framework-mvc</module>
         <module>rookie-spring-framework-web</module>
     </modules>
