@@ -1,8 +1,8 @@
 
 参考文章：
-https://www.cnblogs.com/risuschen/p/12820038.html
 
 https://blog.csdn.net/Sheng_Q/article/details/128266642
+https://www.cnblogs.com/risuschen/p/12820038.html
 
 https://blog.csdn.net/a745233700/article/details/113761271
 
@@ -17,7 +17,7 @@ https://juejin.cn/post/6906637797080170510#comment
 
 Spring的启动流程可以归纳为三个步骤：
 
-    1、初始化Spring容器，注册内置的AnnotatedBeanDefinitionReader将的BeanDefinition注入到容器中
+    1、初始化Spring容器，注册内置的BeanPostProcessor的BeanDefinition到容器中
     2、将配置类的BeanDefinition注册到容器中
     3、调用refresh()方法刷新容器
 
@@ -87,7 +87,8 @@ public void refresh() throws BeansException, IllegalStateException {
 1    PrepareRefresh() 刷新前的预处理
         1.1 initPropertySources()初始化一些属性设置，子类可扩展initPropertySources()方法，Spring web框架对该方法进行了扩展，实现从环境变量中获取属性值填充占位符。
         1.2 getEnvironment().validateRequiredProperties(); 检验属性的合法等。可用于进行容器启动前的环境变量校验，要求指定的变量必须被赋值
-        1.3 earlyApplicationEvents = new LinkedHashSet<ApplicationEvent>; 保存容器中的一些早期时间。属性用于收集事件广播器被初始化前的事件，在广播器创建后再触发这些事件，因此需要提前被初始化；当容器启动完成后，该属性需要被再次设置为null。
+        1.3 earlyApplicationEvents = new LinkedHashSet<ApplicationEvent>;
+        保存容器中的一些早期事件。属性用于收集事件广播器被初始化前的事件，在广播器创建后再触发这些事件，因此需要提前被初始化；当容器启动完成后，该属性需要被再次设置为null。
 
 2   obtainFreshBeanFactory(); 获取在容器初始化时创建的BeanFactory
         2.1 refreshBeanFactory(); 刷新【创建】BeanFactory,refreshBeanFactory()在子类中有不同的实现.
