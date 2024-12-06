@@ -41,7 +41,8 @@ https://blog.csdn.net/2401_83703893/article/details/137058303
             我们这里直接使用的是AnnotationConfigWebApplicationContext,所以这一步省略了
         1.2 配置和刷新Spring容器
             configureAndRefreshWebApplicationContext方法完成了容器的刷新过程：
-                首先将上下文对象保存在Spring容器对象中；然后从web.xml配置信息中取出contextConfigLocation对应的文件来路径并将该路径设置给容器的configLocation属性，即为Spring容器指定了配置文件路径，此时可借助refreh()方法完成容器的刷新过程。
+                首先将上下文对象保存在Spring容器对象中；然后从web
+                .xml配置信息中取出contextConfigLocation对应的文件来路径并将该路径设置给容器的configLocation属性，即为Spring容器指定了配置文件路径，此时可借助refresh()方法完成容器的刷新过程。
                 在刷新容器之前，框架对环境变量的占位符做了替换处理(将环境变量中的占位符替换为真实的上下文对象)以及提供 customizeContext方法用于功能扩展。
                 在ContextLoaderListener监听器对象中，通过读取web.xml的contextInitializerClasses或者globalInitializerClasses属性信息收集ApplicationContextInitializer<ConfigurableApplicationContext>对象，并依次调用这些对象的initialize方。即，可以通过在web.xml中配置ApplicationContextInitializer实现类，实现容器刷新前的定制化操作(配置多个类时可以使用都好或者分号分割)
         1.3 保存Spring容器信息至上下文

@@ -65,7 +65,7 @@ org.springframework.context.support.AbstractRefreshableApplicationContext#refres
         InstantiationAwareBeanPostProcessor接口的postProcessProperties方法也提供给了用户干扰属性设置的能力。
         MergedBeanDefinitionPostProcessor接口提供了操作Beandefinition信息的能力，也可以基于Beandefinition提取相关信息；如AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor在实现依赖注入时使用MergedBeanDefinitionPostProcessor进行依赖注入前的数据准备工作。
     3   初始化阶段
-        初始化阶段是Spring框架为Bean对象自定义的一个阶段，目的在于当Bea对象完成实例化和属性注入后可以执行一些扩展方法。
+        初始化阶段是Spring框架为Bean对象自定义的一个阶段，目的在于当Bean对象完成实例化和属性注入后可以执行一些扩展方法。
         该阶段按执行顺序包括：Aware接口的执行与相关Aware属性的设置、执行BeanPostProcessor的前置方法、执行初始化方法、执行BeanPostProcessor的后置方法。
         其中，BeanPostProcessor的后置方法是依赖注入、AOP等实现原理(后续Spring系列文章中会反复见到BeanPostProcessor的后置方法)。
         该阶段的核心逻辑是执行初始化方法，按照调用顺序包括：InitializingBean接口的afterPropertiesSet()方法 和

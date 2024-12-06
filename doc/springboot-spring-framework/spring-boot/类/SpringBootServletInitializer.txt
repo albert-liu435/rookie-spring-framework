@@ -1,0 +1,8 @@
+作用:
+SpringBootServletInitializer 是一个 Spring Boot 提供的用于配置 Servlet 初始化器的类。它继承自 Spring 的 SpringServletContainerInitializer 类，实现了 WebApplicationInitializer 接口，因此可以在 Servlet 容器启动时自动被加载，并生成一个 servlet 容器的配置类，用于初始化 Servlet 容器。
+在 Spring Boot 应用中，如果需要将应用打包成 WAR 包并部署到外部的 Servlet 容器中，就需要使用 SpringBootServletInitializer。通过创建一个继承自 SpringBootServletInitializer 的类，并在该类中重写 configure() 方法，可以创建一个 Servlet 容器初始化器，用于配置外部的 Servlet 容器
+总的来说，SpringBootServletInitializer 的作用是让 Spring Boot 应用程序可以以 WAR 包的形式部署到外部的 Servlet 容器（如 Tomcat、Jetty 等），并提供一种简单的方式来配置外部 Servlet 容器。
+
+
+文章来源：
+https://www.cnblogs.com/2324hh/p/17467290.html
