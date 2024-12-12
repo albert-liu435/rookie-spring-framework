@@ -29,7 +29,7 @@
 
 
     <modules>
-
+        <module>rookie-javases</module>
         <module>rookie-spring-mybatis</module>
         <module>rookie-spring-web</module>
         <module>rookie-springboot-web</module>
