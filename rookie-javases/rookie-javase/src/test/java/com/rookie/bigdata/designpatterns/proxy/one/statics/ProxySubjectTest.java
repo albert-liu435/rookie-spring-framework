@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @Class ProxySubjectTest
- * @Description 测试类
+ * @Description 测试类 https://blog.csdn.net/weixin_39865508/article/details/141924680
  * @Author rookie
  * @Date 2024/12/19 10:55
  * @Version 1.0
